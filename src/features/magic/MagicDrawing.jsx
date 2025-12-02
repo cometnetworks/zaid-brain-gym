@@ -68,9 +68,9 @@ const MagicDrawing = ({ onBack }) => {
             const description = visionResult.response.text();
             console.log("Description:", description);
 
-            // 2. GENERATION: Create the new image using Gemini 2.0 Flash Exp (which supports generation)
+            // 2. GENERATION: Create the new image using the specific Image Generation model
             // We use the description + the style prompt
-            const genModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+            const genModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp-image-generation" });
 
             const stylePrompt = STYLES.find(s => s.id === selectedStyle).prompt;
             const finalPrompt = `${stylePrompt} Scene description: ${description}`;
@@ -80,10 +80,7 @@ const MagicDrawing = ({ onBack }) => {
             const genResult = await genModel.generateContent(finalPrompt);
             const response = await genResult.response;
 
-            // Check for images in the response
-            // Note: The SDK might return images in different ways depending on the version/model
-            // We check for inlineData or executable code that produces images, but standard Gemini image gen 
-            // usually returns an inlineData part with mimeType image/png or image/jpeg
+            console.log("Gen Response:", response);
 
             // Inspect parts
             const parts = response.candidates?.[0]?.content?.parts || [];
@@ -95,18 +92,16 @@ const MagicDrawing = ({ onBack }) => {
                 playSound('correct');
                 setStep('result');
             } else {
-                // Fallback: If the model returned text instead of an image (refusal or config issue)
+                // Fallback: If the model returned text instead of an image
                 console.warn("Model returned text instead of image:", response.text());
-                throw new Error("El modelo no devolvió una imagen. Intentando de nuevo...");
+                throw new Error("La IA respondió con texto en lugar de imagen: " + response.text().substring(0, 50) + "...");
             }
 
         } catch (err) {
             console.error("Generation Error:", err);
-            // Fallback to simulation if real generation fails, so the kid is not disappointed
-            // But we try to use the description to at least show we understood
-            setError("La IA está cansada, pero aquí tienes tu dibujo original.");
-            setResult(imgSrc);
-            setStep('result');
+            // Show the actual error to the user instead of silently failing
+            setError(`Error: ${err.message || "Algo salió mal"}`);
+            setStep('preview'); // Go back to preview so they can try again
         }
     };
 
