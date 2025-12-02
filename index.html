@@ -1,0 +1,1231 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Sparkles, Brain, Clock, Settings, User, CheckCircle, XCircle, 
+  Play, Pause, RotateCcw, Lock, Star, Heart, Map, Hammer, HelpCircle,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Home, ChevronRight,
+  BookOpen, Eye, Zap, Calculator, Grid, Hash, Trophy, Timer, Languages,
+  Volume2, VolumeX, Smile, Target
+} from 'lucide-react';
+
+// ==========================================
+// SISTEMA DE AUDIO (SYNTH)
+// ==========================================
+const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+const playTone = (freq, type = 'sine', duration = 0.3) => {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+  osc.stop(audioCtx.currentTime + duration);
+};
+
+const playSound = (effect) => {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  switch (effect) {
+    case 'correct':
+      playTone(600, 'sine', 0.1);
+      setTimeout(() => playTone(800, 'sine', 0.2), 100);
+      break;
+    case 'wrong':
+      playTone(150, 'sawtooth', 0.4);
+      break;
+    case 'pop':
+      playTone(400, 'triangle', 0.1);
+      break;
+    case 'flip':
+      playTone(500, 'sine', 0.05);
+      break;
+    case 'gameover':
+      playTone(300, 'sawtooth', 0.2);
+      setTimeout(() => playTone(250, 'sawtooth', 0.2), 200);
+      setTimeout(() => playTone(200, 'sawtooth', 0.4), 400);
+      break;
+    case 'win':
+      playTone(400, 'sine', 0.1);
+      setTimeout(() => playTone(500, 'sine', 0.1), 100);
+      setTimeout(() => playTone(600, 'sine', 0.1), 200);
+      setTimeout(() => playTone(800, 'square', 0.4), 300);
+      break;
+    case 'move':
+      playTone(300, 'triangle', 0.05);
+      break;
+    case 'wall':
+      playTone(100, 'sawtooth', 0.1);
+      break;
+    // Tonos estilo Fabuloso Fred / Simon
+    case 'simon_green': playTone(415.30, 'triangle', 0.5); break; // G#4
+    case 'simon_red': playTone(310.00, 'triangle', 0.5); break;   // D#4
+    case 'simon_yellow': playTone(252.00, 'triangle', 0.5); break;// B3
+    case 'simon_blue': playTone(209.00, 'triangle', 0.5); break;  // G#3
+    case 'simon_purple': playTone(150.00, 'triangle', 0.5); break;
+    case 'simon_orange': playTone(500.00, 'triangle', 0.5); break;
+    default: break;
+  }
+};
+
+// ==========================================
+// EFECTO CONFETI
+// ==========================================
+const Confetti = () => {
+  const colors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7'];
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-50">
+      {Array.from({ length: 50 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-3 h-3 rounded-full animate-confetti"
+          style={{
+            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+            left: `${Math.random() * 100}%`,
+            top: `-5%`,
+            animationDuration: `${Math.random() * 2 + 2}s`,
+            animationDelay: `${Math.random() * 2}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// ==========================================
+// BASES DE DATOS
+// ==========================================
+
+const STORY_DB = [
+  { title: "El Perro Pepe", text: "Pepe es un perro feliz. Juega con su pelota roja en el parque.", q: "¿De qué color es la pelota?", a: "ROJA", opts: ["ROJA", "AZUL"] },
+  { title: "La Rana Juana", text: "Juana es una rana verde. A ella le gusta saltar en el agua fría.", q: "¿Qué le gusta a Juana?", a: "SALTAR", opts: ["SALTAR", "CORRER"] },
+  { title: "El Gato Miau", text: "Miau come pescado. Duerme mucho en su cama suave y azul.", q: "¿Qué come Miau?", a: "PESCADO", opts: ["PESCADO", "POLLO"] },
+  { title: "El Sol Solecito", text: "El sol sale por la mañana. Nos da calor y luz amarilla.", q: "¿Cuándo sale el sol?", a: "MAÑANA", opts: ["MAÑANA", "NOCHE"] },
+  { title: "La Osa Rosa", text: "Rosa es una osa grande. Le gusta comer miel dulce del bosque.", q: "¿Qué come Rosa?", a: "MIEL", opts: ["MIEL", "PAN"] },
+];
+
+const PHYS_DB = [
+  "Construye una torre de 10 objetos sin que se caiga.",
+  "Da 5 saltos de rana y luego mantén el equilibrio en un pie.",
+  "Camina como cangrejo de un lado a otro de la habitación.",
+  "Haz una bolita de papel y encéstala en un bote de basura lejos.",
+  "Trae 3 objetos de color ROJO lo más rápido posible.",
+  "Gatea por debajo de una mesa sin tocar las patas.",
+];
+
+// --- DICCIONARIO ESPAÑOL AMPLIADO ---
+const WORD_DB_ES = [
+  { word: 'SOL', icon: 'sun' }, { word: 'PAN', icon: 'bread' }, { word: 'MAR', icon: 'sea' },
+  { word: 'GATO', icon: 'cat' }, { word: 'PATO', icon: 'duck' }, { word: 'LUNA', icon: 'moon' },
+  { word: 'CASA', icon: 'house' }, { word: 'PERRO', icon: 'dog' }, { word: 'LIBRO', icon: 'book' },
+  { word: 'ARBOL', icon: 'tree' }, { word: 'FLOR', icon: 'flower' }, { word: 'MESA', icon: 'table' },
+  { word: 'LAPIZ', icon: 'pencil' }, { word: 'TREN', icon: 'train' }, { word: 'LEON', icon: 'lion' },
+  { word: 'TIGRE', icon: 'tiger' }, { word: 'RATON', icon: 'mouse' }, { word: 'MANZANA', icon: 'apple' },
+  { word: 'AGUA', icon: 'water' }, { word: 'FUEGO', icon: 'fire' }, { word: 'NUBE', icon: 'cloud' }
+];
+
+// --- DICCIONARIO INGLÉS AMPLIADO ---
+const WORD_DB_EN = [
+  { word: 'SUN', icon: 'sun' }, { word: 'CAT', icon: 'cat' }, { word: 'DOG', icon: 'dog' },
+  { word: 'CAR', icon: 'car' }, { word: 'RED', icon: 'red' }, { word: 'BLUE', icon: 'blue' },
+  { word: 'BOOK', icon: 'book' }, { word: 'TREE', icon: 'tree' }, { word: 'FISH', icon: 'fish' },
+  { word: 'BIRD', icon: 'bird' }, { word: 'MILK', icon: 'milk' }, { word: 'STAR', icon: 'star' },
+  { word: 'LION', icon: 'lion' }, { word: 'PIG', icon: 'pig' }, { word: 'HAT', icon: 'hat' },
+  { word: 'BALL', icon: 'ball' }, { word: 'CAKE', icon: 'cake' }, { word: 'FROG', icon: 'frog' },
+  { word: 'SHIP', icon: 'ship' }, { word: 'MOON', icon: 'moon' }, { word: 'DUCK', icon: 'duck' }
+];
+
+// ==========================================
+// ASSETS VISUALES
+// ==========================================
+const ModernAsset = ({ type, size = 16, className="", count = 1 }) => {
+  const s = size * 4;
+  const renderIcon = () => {
+    switch(type) {
+      case 'apple': return <div className="text-4xl drop-shadow-md">🍎</div>;
+      case 'star': return <div className="text-4xl drop-shadow-md">⭐</div>;
+      case 'cat': return <div className="text-4xl drop-shadow-md">🐱</div>;
+      case 'dog': return <div className="text-4xl drop-shadow-md">🐶</div>;
+      case 'sun': return <div className="text-4xl drop-shadow-md">☀️</div>;
+      case 'bread': return <div className="text-4xl drop-shadow-md">🍞</div>;
+      case 'sea': return <div className="text-4xl drop-shadow-md">🌊</div>;
+      case 'duck': return <div className="text-4xl drop-shadow-md">🦆</div>;
+      case 'moon': return <div className="text-4xl drop-shadow-md">🌙</div>;
+      case 'house': return <div className="text-4xl drop-shadow-md">🏠</div>;
+      case 'book': return <div className="text-4xl drop-shadow-md">📖</div>;
+      case 'tree': return <div className="text-4xl drop-shadow-md">🌳</div>;
+      case 'flower': return <div className="text-4xl drop-shadow-md">🌸</div>;
+      case 'table': return <div className="text-4xl drop-shadow-md">🪑</div>;
+      case 'pencil': return <div className="text-4xl drop-shadow-md">✏️</div>;
+      case 'car': return <div className="text-4xl drop-shadow-md">🚗</div>;
+      case 'train': return <div className="text-4xl drop-shadow-md">🚂</div>;
+      case 'lion': return <div className="text-4xl drop-shadow-md">🦁</div>;
+      case 'tiger': return <div className="text-4xl drop-shadow-md">🐯</div>;
+      case 'mouse': return <div className="text-4xl drop-shadow-md">🐭</div>;
+      case 'water': return <div className="text-4xl drop-shadow-md">💧</div>;
+      case 'fire': return <div className="text-4xl drop-shadow-md">🔥</div>;
+      case 'cloud': return <div className="text-4xl drop-shadow-md">☁️</div>;
+      case 'red': return <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-white shadow"></div>;
+      case 'blue': return <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow"></div>;
+      case 'fish': return <div className="text-4xl drop-shadow-md">🐟</div>;
+      case 'bird': return <div className="text-4xl drop-shadow-md">🐦</div>;
+      case 'milk': return <div className="text-4xl drop-shadow-md">🥛</div>;
+      case 'pig': return <div className="text-4xl drop-shadow-md">🐷</div>;
+      case 'hat': return <div className="text-4xl drop-shadow-md">🎩</div>;
+      case 'ball': return <div className="text-4xl drop-shadow-md">⚽</div>;
+      case 'cake': return <div className="text-4xl drop-shadow-md">🍰</div>;
+      case 'frog': return <div className="text-4xl drop-shadow-md">🐸</div>;
+      case 'ship': return <div className="text-4xl drop-shadow-md">🚢</div>;
+      case 'wall': return <div className="w-full h-full bg-slate-700 rounded-sm border-t-4 border-slate-500 shadow-xl flex items-center justify-center text-xs">🧱</div>;
+      case 'fire_wall': return <div className="w-full h-full bg-orange-600 rounded-sm border-t-4 border-orange-400 shadow-inner flex items-center justify-center text-xs animate-pulse">🔥</div>;
+      default: return <div className="text-4xl">📦</div>;
+    }
+  };
+
+  return (
+    <div className={`flex gap-1 flex-wrap justify-center ${className}`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="animate-bounce-slight" style={{ width: s, height: s, fontSize: s/1.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {renderIcon()}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const MascotGuide = ({ text, onNext, isParent = false }) => (
+  <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fade-in">
+    <div className="bg-white rounded-3xl border-4 border-blue-400 max-w-lg w-full p-8 shadow-2xl relative mt-10 text-center">
+      <div className="absolute -top-16 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-2xl shadow-xl border-4 border-white flex items-center justify-center text-5xl">🤖</div>
+      </div>
+      <h3 className="text-2xl font-bold text-blue-600 mt-8 mb-4 font-sans">{isParent ? 'NOTA PARA PAPÁ' : '¡HOLA ZAID!'}</h3>
+      <p className="text-xl text-slate-700 leading-relaxed font-medium mb-8">{text}</p>
+      <button onClick={() => { playSound('pop'); onNext(); }} className="w-full bg-gradient-to-r from-green-400 to-green-600 text-white font-bold text-xl py-4 rounded-xl shadow-lg hover:scale-105 transition-transform">
+        {isParent ? 'ENTENDIDO' : '¡VAMOS!'}
+      </button>
+    </div>
+  </div>
+);
+
+// ==========================================
+// JUEGOS ACTUALIZADOS (CON MODO DIARIO)
+// ==========================================
+
+// 1. LECTURA RÁPIDA
+const SpeedReading = ({ onComplete, isDaily, dailyTarget = 60 }) => {
+  const [timeLeft, setTimeLeft] = useState(isDaily ? dailyTarget : 60);
+  const [score, setScore] = useState(0);
+  const [currentWord, setCurrentWord] = useState(null);
+  const [options, setOptions] = useState([]);
+  const [showWord, setShowWord] = useState(true);
+
+  const wordPool = [
+    { text: "CASA", emoji: "house" }, { text: "PERRO", emoji: "dog" }, { text: "AUTO", emoji: "car" }, 
+    { text: "SOL", emoji: "sun" }, { text: "GATO", emoji: "cat" }, { text: "PELOTA", emoji: "ball" },
+    { text: "MANZANA", emoji: "apple" }, { text: "LIBRO", emoji: "book" }, { text: "LAPIZ", emoji: "pencil" },
+    { text: "TREN", emoji: "train" }, { text: "LEON", emoji: "lion" }, { text: "AGUA", emoji: "water" }
+  ];
+
+  const nextRound = () => {
+    setShowWord(true);
+    const target = wordPool[Math.floor(Math.random() * wordPool.length)];
+    setCurrentWord(target);
+    const distractors = wordPool.filter(w => w.text !== target.text).sort(() => 0.5 - Math.random()).slice(0, 2);
+    setOptions([target, ...distractors].sort(() => 0.5 - Math.random()));
+    setTimeout(() => setShowWord(false), 1500); 
+  };
+
+  useEffect(() => {
+    nextRound();
+    const timer = setInterval(() => setTimeLeft(t => t <= 1 ? (clearInterval(timer), 0) : t - 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => { if (timeLeft === 0) onComplete(score); }, [timeLeft]);
+
+  const handleChoice = (opt) => {
+    if (showWord) return;
+    if (opt.text === currentWord.text) {
+      playSound('correct');
+      setScore(s => s + 10);
+    } else {
+      playSound('wrong');
+    }
+    nextRound();
+  };
+
+  if (showWord && currentWord) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+         <div className="absolute top-4 right-4 text-2xl font-mono bg-slate-100 p-2 rounded">⏱️ {timeLeft}s</div>
+         <h1 className="text-6xl md:text-8xl font-black text-slate-800 animate-pulse">{currentWord.text}</h1>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-8">
+      <div className="absolute top-4 flex justify-between w-full px-8">
+         <div className="text-2xl font-bold text-green-600">Puntos: {score}</div>
+         <div className="text-2xl font-mono bg-slate-100 p-2 rounded">⏱️ {timeLeft}s</div>
+      </div>
+      <h2 className="text-2xl text-slate-600">¿Qué palabra viste?</h2>
+      <div className="flex gap-4">
+        {options.map((opt, i) => (
+          <button key={i} onClick={() => handleChoice(opt)} className="w-28 h-28 bg-white border-4 border-blue-200 rounded-2xl shadow-lg hover:scale-110 active:bg-blue-50 transition-transform flex items-center justify-center">
+            <ModernAsset type={opt.emoji} size={12} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 2. ATENCIÓN
+const OddOneOut = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+  const [streak, setStreak] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [items, setItems] = useState([]);
+  const [oddIndex, setOddIndex] = useState(0);
+
+  const generateLevel = () => {
+    const currentGrid = level < 2 ? 4 : level < 4 ? 9 : 16; 
+    const icons = [{ main: 'apple', odd: 'star' }, { main: 'dog', odd: 'cat' }, { main: 'car', odd: 'sun' }, { main: 'sun', odd: 'flower' }, { main: 'fish', odd: 'bird' }];
+    const theme = icons[Math.floor(Math.random() * icons.length)];
+    const newItems = Array(currentGrid).fill(theme.main);
+    const idx = Math.floor(Math.random() * currentGrid);
+    newItems[idx] = theme.odd;
+    setItems(newItems);
+    setOddIndex(idx);
+  };
+
+  useEffect(() => { generateLevel(); }, [level]);
+
+  const handleClick = (idx) => {
+    if (idx === oddIndex) {
+      playSound('correct');
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      
+      // Daily Goal Check
+      if (isDaily && newStreak >= dailyTarget) {
+         playSound('win');
+         onComplete(newStreak * 10);
+         return;
+      }
+
+      if (newStreak % 10 === 0) setLevel(l => l + 1);
+      generateLevel();
+    } else {
+      playSound('wrong');
+      if (!isDaily) onComplete(streak * 10); // Arcade mode ends on fail
+    }
+  };
+
+  const gridClass = items.length === 4 ? 'grid-cols-2' : items.length === 9 ? 'grid-cols-3' : 'grid-cols-4';
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         {isDaily ? (
+            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold flex items-center gap-2">
+               <Target size={20}/> Misión: {streak} / {dailyTarget}
+            </div>
+         ) : (
+            <div className="text-xl font-bold text-slate-500">Nivel {Math.floor(streak/10) + 1}</div>
+         )}
+         <div className="text-2xl font-bold text-green-600">Racha: {streak}</div>
+      </div>
+      <h2 className="text-2xl font-bold mb-8 text-slate-600">ENCUENTRA EL DIFERENTE</h2>
+      <div className={`grid gap-4 ${gridClass}`}>
+        {items.map((item, i) => (
+          <button key={i} onClick={() => handleClick(i)} className="w-20 h-20 bg-white rounded-2xl shadow-md border-b-4 border-slate-200 active:border-b-0 active:translate-y-1 hover:bg-blue-50 flex items-center justify-center transition-all">
+            <ModernAsset type={item} size={10} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 3. MEMORIA (SIMÓN / FABULOSO FRED)
+const MemorySimon = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+  const [sequence, setSequence] = useState([]);
+  const [userStep, setUserStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const [score, setScore] = useState(0);
+  const [numColors, setNumColors] = useState(4); 
+
+  const allColors = [
+    { id: 'green', class: 'bg-green-500 border-green-700', tone: 'simon_green' },
+    { id: 'red', class: 'bg-red-500 border-red-700', tone: 'simon_red' },
+    { id: 'yellow', class: 'bg-yellow-400 border-yellow-600', tone: 'simon_yellow' },
+    { id: 'blue', class: 'bg-blue-500 border-blue-700', tone: 'simon_blue' },
+    { id: 'purple', class: 'bg-purple-500 border-purple-700', tone: 'simon_purple' },
+    { id: 'orange', class: 'bg-orange-500 border-orange-700', tone: 'simon_orange' },
+  ];
+
+  const activeColors = allColors.slice(0, numColors);
+
+  useEffect(() => {
+    if (sequence.length === 0 && !isPlaying) setTimeout(() => addToSequence(), 1000);
+  }, []);
+
+  const addToSequence = () => {
+    setIsPlaying(true);
+    const randomColor = activeColors[Math.floor(Math.random() * activeColors.length)];
+    const newSeq = [...sequence, randomColor];
+    setSequence(newSeq);
+    playSequence(newSeq);
+  };
+
+  const playSequence = async (seq) => {
+    await new Promise(r => setTimeout(r, 500));
+    for (let i = 0; i < seq.length; i++) {
+      const color = seq[i];
+      setFlash(color.id);
+      playSound(color.tone); 
+      await new Promise(r => setTimeout(r, 600));
+      setFlash(null);
+      await new Promise(r => setTimeout(r, 200));
+    }
+    setIsPlaying(false);
+    setUserStep(0);
+  };
+
+  const handleTap = (color) => {
+    if (isPlaying) return;
+    setFlash(color.id);
+    playSound(color.tone);
+    setTimeout(() => setFlash(null), 200);
+
+    if (color.id === sequence[userStep].id) {
+      if (userStep === sequence.length - 1) {
+        const newScore = score + 1;
+        setScore(newScore);
+        
+        // Daily Check
+        if (isDaily && newScore >= dailyTarget) {
+            playSound('win');
+            onComplete(newScore * 10);
+            return;
+        }
+
+        if (newScore > 0 && newScore % 10 === 0 && numColors < allColors.length) {
+            playSound('win');
+            setNumColors(n => n + 1);
+            setSequence([]); 
+        }
+        setTimeout(() => addToSequence(), 1000);
+      } else {
+        setUserStep(u => u + 1);
+      }
+    } else {
+      playSound('wrong');
+      if (!isDaily) onComplete(score * 10);
+      else {
+          // In daily mode, maybe restart sequence?
+          setSequence([]);
+          setScore(0);
+          setTimeout(() => addToSequence(), 1000);
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         {isDaily && (
+            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold flex items-center gap-2">
+               <Target size={20}/> Misión: {score} / {dailyTarget}
+            </div>
+         )}
+         <div className="text-2xl font-bold text-green-600">Secuencia: {score}</div>
+      </div>
+      <h2 className="text-2xl font-bold mb-8 text-slate-600">SIGUE EL RITMO</h2>
+      <div className={`grid gap-4 ${numColors > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {activeColors.map(c => (
+          <button
+            key={c.id}
+            onClick={() => handleTap(c)}
+            className={`
+               w-24 h-24 rounded-3xl border-b-8 transition-all duration-100 shadow-xl 
+               ${c.class} 
+               ${flash === c.id ? 'brightness-150 scale-105 border-b-0 translate-y-2' : ''}
+               active:border-b-0 active:translate-y-2
+            `}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 3.5 MEMORIA PARES
+const MemoryMatch = ({ onComplete, isDaily }) => {
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [level, setLevel] = useState(1);
+  const [score, setScore] = useState(0);
+  const [isWon, setIsWon] = useState(false);
+  const [lives, setLives] = useState(10); 
+
+  const initGame = (lvl) => {
+    const icons = ['apple', 'cat', 'dog', 'car', 'sun', 'star', 'fish', 'bird'];
+    const numPairs = lvl === 1 ? 4 : lvl === 2 ? 6 : 8; 
+    const selectedIcons = icons.slice(0, numPairs);
+    const deck = [...selectedIcons, ...selectedIcons]
+      .sort(() => Math.random() - 0.5)
+      .map((icon, id) => ({ id, icon }));
+    
+    setCards(deck);
+    setFlipped([]);
+    setMatched([]);
+    setIsWon(false);
+  };
+
+  useEffect(() => { initGame(level); }, [level]);
+
+  const handleCardClick = (id) => {
+    if (flipped.length === 2 || flipped.includes(id) || matched.includes(id) || lives <= 0) return;
+    
+    playSound('flip');
+    const newFlipped = [...flipped, id];
+    setFlipped(newFlipped);
+
+    if (newFlipped.length === 2) {
+      const id1 = newFlipped[0];
+      const id2 = newFlipped[1];
+      const card1 = cards.find(c => c.id === id1);
+      const card2 = cards.find(c => c.id === id2);
+
+      if (card1.icon === card2.icon) {
+        playSound('correct');
+        setMatched(prev => [...prev, id1, id2]);
+        setFlipped([]);
+        setScore(s => s + 10);
+        
+        if (matched.length + 2 === cards.length) {
+          setIsWon(true);
+          playSound('win');
+          setTimeout(() => {
+             // In Daily Mode, winning one board is enough
+             if (isDaily) {
+                 onComplete(score + 100);
+             } else {
+                 if (level < 3) setLevel(l => l + 1);
+                 else onComplete(score + 100);
+             }
+          }, 2000);
+        }
+      } else {
+        playSound('wrong');
+        setLives(prev => {
+            const newLives = prev - 1;
+            if (newLives <= 0) {
+               setTimeout(() => {
+                  playSound('gameover');
+                  onComplete(score);
+               }, 1000);
+            }
+            return newLives;
+        });
+        setTimeout(() => { setFlipped([]); }, 1000);
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      {isWon && <Confetti />}
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         <div className="flex gap-1 flex-wrap max-w-[50%]">
+           {[...Array(10)].map((_, i) => (
+              <Heart key={i} fill={i < lives ? "#ef4444" : "#e2e8f0"} color={i < lives ? "#ef4444" : "#cbd5e1"} className={`w-4 h-4 md:w-6 md:h-6 transition-all ${i < lives ? 'animate-pulse' : ''}`}/>
+           ))}
+         </div>
+         {isDaily && <div className="text-xl font-bold text-yellow-600 bg-yellow-100 px-3 py-1 rounded-full"><Target className="inline w-4 h-4"/> ¡Completa!</div>}
+         <div className="text-2xl font-bold text-green-600">Puntos: {score}</div>
+      </div>
+      <h2 className="text-2xl font-bold mb-6 text-slate-600">ENCUENTRA LOS PARES</h2>
+      <div className={`grid gap-3 ${cards.length <= 12 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        {cards.map(card => {
+          const isFlipped = flipped.includes(card.id) || matched.includes(card.id);
+          return (
+            <button key={card.id} onClick={() => handleCardClick(card.id)} className={`w-20 h-24 rounded-xl border-4 transition-all duration-300 transform perspective-1000 ${isFlipped ? 'bg-white border-blue-300 rotate-y-180' : 'bg-blue-500 border-blue-700'} shadow-lg`}>
+              {isFlipped ? <div className="flex items-center justify-center h-full animate-pop"><ModernAsset type={card.icon} size={10} /></div> : <div className="flex items-center justify-center h-full text-white font-bold text-2xl">?</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// 4. MATEMÁTICAS
+const VisualMath = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+  const [streak, setStreak] = useState(0);
+  const [problem, setProblem] = useState(null);
+
+  const generateProblem = () => {
+    const level = Math.floor(streak / 10);
+    const maxNum = level === 0 ? 5 : level === 1 ? 10 : 20;
+    const a = Math.floor(Math.random() * (maxNum - 1)) + 1;
+    const b = Math.floor(Math.random() * (maxNum - a)) + 1;
+    const ans = a + b;
+    let opts = new Set([ans]);
+    while(opts.size < 3) {
+      const offset = Math.floor(Math.random() * 5) - 2;
+      const fake = ans + offset;
+      if (fake > 0 && fake !== ans) opts.add(fake);
+    }
+    setProblem({ a, b, ans, opts: Array.from(opts).sort(() => Math.random() - 0.5) });
+  };
+
+  useEffect(() => { generateProblem(); }, [streak]);
+
+  const handleAns = (val) => {
+    if (val === problem.ans) {
+      playSound('correct');
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (isDaily && newStreak >= dailyTarget) {
+          playSound('win');
+          onComplete(newStreak * 10);
+      }
+    } else {
+      playSound('wrong');
+      if (!isDaily) onComplete(streak * 10);
+    }
+  };
+
+  if (!problem) return null;
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         {isDaily ? (
+            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold flex items-center gap-2">
+               <Target size={20}/> Problema: {streak} / {dailyTarget}
+            </div>
+         ) : (
+            <div className="text-xl font-bold text-slate-500">Nivel {Math.floor(streak/10) + 1}</div>
+         )}
+         <div className="text-2xl font-bold text-green-600">Racha: {streak}</div>
+      </div>
+      <div className="flex items-center gap-4 mb-12 bg-white p-6 rounded-2xl shadow-lg border-2 border-slate-100">
+        {problem.a <= 5 ? <ModernAsset type="apple" count={problem.a} /> : <span className="text-6xl font-bold text-red-500">{problem.a}</span>}
+        <span className="text-4xl font-bold text-slate-400">+</span>
+        {problem.b <= 5 ? <ModernAsset type="apple" count={problem.b} /> : <span className="text-6xl font-bold text-red-500">{problem.b}</span>}
+        <span className="text-4xl font-bold text-slate-400">=</span>
+        <div className="w-20 h-20 border-b-4 border-slate-300 bg-slate-50 rounded-lg flex items-center justify-center text-4xl text-slate-400">?</div>
+      </div>
+      <div className="flex gap-6">
+        {problem.opts.map(opt => (
+          <button key={opt} onClick={() => handleAns(opt)} className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-4xl font-bold rounded-2xl shadow-lg hover:scale-110 active:scale-95 transition-transform">
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 5. ORDENA LETRAS / SPELLING BEE
+const WordBuilder = ({ onComplete, language = 'es', isDaily, dailyTarget = 5 }) => {
+  const [streak, setStreak] = useState(0);
+  const [lives, setLives] = useState(10); 
+  const [target, setTarget] = useState(null);
+  const [placed, setPlaced] = useState([]);
+  const [scramble, setScramble] = useState([]);
+  const [errorIndex, setErrorIndex] = useState(null);
+
+  const db = language === 'en' ? WORD_DB_EN : WORD_DB_ES;
+
+  const nextWord = () => {
+    const w = db[Math.floor(Math.random() * db.length)];
+    setTarget(w);
+    setPlaced(Array(w.word.length).fill(null));
+    const letters = w.word.split('').sort(() => Math.random() - 0.5);
+    setScramble(letters);
+    setErrorIndex(null);
+  };
+
+  useEffect(() => { nextWord(); }, [streak]);
+
+  const handlePool = (char) => {
+    const idx = placed.indexOf(null);
+    if (idx !== -1) {
+      if (char !== target.word[idx]) {
+        playSound('wrong');
+        const newLives = lives - 1;
+        setLives(newLives);
+        setErrorIndex(idx);
+        const newPlaced = [...placed];
+        newPlaced[idx] = char;
+        setPlaced(newPlaced);
+        setTimeout(() => {
+           const resetPlaced = [...newPlaced];
+           resetPlaced[idx] = null;
+           setPlaced(resetPlaced);
+           setErrorIndex(null);
+           if (newLives <= 0) {
+              playSound('gameover');
+              onComplete(streak * 10);
+           }
+        }, 800);
+      } else {
+        playSound('pop');
+        const newPlaced = [...placed];
+        newPlaced[idx] = char;
+        setPlaced(newPlaced);
+        if (newPlaced.join('') === target.word) {
+          playSound('correct');
+          setTimeout(() => {
+             const newStreak = streak + 1;
+             setStreak(newStreak);
+             if (isDaily && newStreak >= dailyTarget) {
+                 playSound('win');
+                 onComplete(newStreak * 10);
+             }
+          }, 500);
+        }
+      }
+    }
+  };
+
+  const handleReset = () => {
+    playSound('pop');
+    setPlaced(Array(target.word.length).fill(null));
+    setErrorIndex(null);
+  };
+
+  if (!target) return null;
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-8">
+      {isDaily && (
+         <div className="absolute top-16 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold flex items-center gap-2 z-10">
+            <Target size={20}/> Palabras: {streak} / {dailyTarget}
+         </div>
+      )}
+      
+      <div className="absolute top-4 w-full flex justify-between px-8 items-center">
+        <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-bold text-sm">
+           {language === 'en' ? 'ENGLISH' : 'ESPAÑOL'}
+        </div>
+        <div className="flex gap-1 flex-wrap max-w-[50%]">
+           {[...Array(10)].map((_, i) => ( 
+              <Heart key={i} fill={i < lives ? "#ef4444" : "#e2e8f0"} color={i < lives ? "#ef4444" : "#cbd5e1"} className={`w-4 h-4 md:w-6 md:h-6 transition-all ${i < lives ? 'animate-pulse' : ''}`}/>
+           ))}
+        </div>
+        <div className="text-2xl font-bold text-green-600">Puntos: {streak * 10}</div>
+      </div>
+
+      <div className="animate-bounce-slight mt-8">
+        <ModernAsset type={target.icon} size={24} />
+      </div>
+
+      <div className="flex gap-2 min-h-[80px]">
+        {placed.map((l, i) => (
+          <div key={i} className={`w-14 h-16 md:w-16 md:h-20 border-b-4 rounded-lg flex items-center justify-center text-4xl font-bold transition-all ${i === errorIndex ? 'bg-red-100 border-red-400 text-red-600 animate-shake' : 'bg-slate-100 border-slate-300 text-slate-700'} ${l && i !== errorIndex ? 'bg-blue-50 border-blue-300 text-blue-800' : ''}`}>
+            {l}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-3 flex-wrap justify-center max-w-md">
+        {scramble.map((char, i) => (
+          <button key={i} onClick={() => handlePool(char)} className="w-14 h-14 bg-purple-100 text-purple-600 rounded-xl font-bold text-2xl shadow-sm border border-purple-200 hover:scale-110 active:scale-95 transition-transform">
+            {char}
+          </button>
+        ))}
+      </div>
+      <button onClick={handleReset} className="text-sm text-slate-400 underline hover:text-slate-600">Borrar todo</button>
+    </div>
+  );
+};
+
+// 6. HISTORIAS
+const StoryTime = ({ onComplete }) => {
+  // Sin cambios mayores, ya tiene límite de 60s
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [score, setScore] = useState(0);
+  const [currentStory, setCurrentStory] = useState(null);
+  const [step, setStep] = useState('read');
+  const [usedStories, setUsedStories] = useState([]);
+
+  useEffect(() => {
+    pickStory();
+    const timer = setInterval(() => setTimeLeft(t => t <= 1 ? (clearInterval(timer), 0) : t - 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => { if (timeLeft === 0) onComplete(score * 10); }, [timeLeft]);
+
+  const pickStory = () => {
+    let pool = STORY_DB.filter(s => !usedStories.includes(s.title));
+    if (pool.length === 0) { setUsedStories([]); pool = STORY_DB; }
+    const s = pool[Math.floor(Math.random() * pool.length)];
+    setCurrentStory(s);
+    setUsedStories(prev => [...prev, s.title]);
+    setStep('read');
+  };
+
+  const handleAnswer = (ans) => {
+    if (ans === currentStory.a) {
+      playSound('correct');
+      setScore(s => s + 1);
+      pickStory();
+    } else {
+      playSound('wrong');
+    }
+  };
+
+  if (!currentStory) return null;
+
+  if (step === 'read') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+        <div className="absolute top-4 right-4 text-2xl font-mono bg-slate-100 p-2 rounded">⏱️ {timeLeft}s</div>
+        <div className="bg-yellow-50 p-6 rounded-3xl border-4 border-yellow-200 shadow-xl max-w-md animate-fade-in">
+           <h3 className="text-xl font-bold text-yellow-800 mb-2">{currentStory.title}</h3>
+           <p className="text-xl text-slate-700 leading-relaxed mb-4">{currentStory.text}</p>
+           <button onClick={() => { playSound('pop'); setStep('quiz'); }} className="bg-green-500 text-white px-8 py-3 rounded-full font-bold text-xl shadow-lg hover:scale-105 active:scale-95 transition-transform">
+             ¡Listo, a preguntar!
+           </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-8 text-center">
+      <div className="absolute top-4 right-4 text-2xl font-mono bg-slate-100 p-2 rounded">⏱️ {timeLeft}s</div>
+      <h2 className="text-2xl font-bold text-slate-700 px-4">{currentStory.q}</h2>
+      <div className="grid grid-cols-2 gap-6">
+        {currentStory.opts.map(opt => (
+          <button key={opt} onClick={() => handleAnswer(opt)} className="bg-blue-500 text-white w-32 h-32 rounded-2xl font-bold text-xl shadow-lg hover:scale-105 active:scale-95 transition-transform">
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 7. CONTEO RÁPIDO
+const QuickCount = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+  const [streak, setStreak] = useState(0);
+  const [count, setCount] = useState(0);
+  const [show, setShow] = useState(true);
+  const [options, setOptions] = useState([]);
+
+  const nextRound = () => {
+    setShow(true);
+    const level = Math.floor(streak / 10);
+    const min = 3 + level;
+    const max = 6 + level * 2;
+    const n = Math.floor(Math.random() * (max - min + 1)) + min;
+    setCount(n);
+    const opts = new Set([n]);
+    while (opts.size < 3) { opts.add(n + Math.floor(Math.random() * 5) - 2); }
+    setOptions(Array.from(opts).filter(x => x > 0).sort(() => Math.random() - 0.5).slice(0,3));
+    setTimeout(() => setShow(false), 2000); 
+  };
+
+  useEffect(() => { nextRound(); }, [streak]);
+
+  const handleAns = (val) => {
+    if (val === count) {
+      playSound('correct');
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (isDaily && newStreak >= dailyTarget) {
+          playSound('win');
+          onComplete(newStreak * 10);
+      }
+    } else {
+      playSound('wrong');
+      if (!isDaily) onComplete(streak * 10);
+    }
+  };
+
+  if (show) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        {isDaily && <div className="absolute top-4 left-4 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold">Misión: {streak}/{dailyTarget}</div>}
+        <h2 className="text-2xl mb-8 font-bold text-slate-600">¡CUENTA RÁPIDO!</h2>
+        <div className="flex flex-wrap gap-4 justify-center max-w-xs animate-pulse">
+           {Array.from({length: count}).map((_,i) => <ModernAsset key={i} type="star" />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="absolute top-4 right-4 text-2xl font-bold text-green-600">Racha: {streak}</div>
+      <h2 className="text-2xl mb-8 font-bold text-slate-600">¿CUÁNTOS HABÍA?</h2>
+      <div className="flex gap-4">
+         {options.map(n => (
+           <button key={n} onClick={() => handleAns(n)} className="w-24 h-24 bg-yellow-400 text-white font-bold text-5xl rounded-2xl border-b-8 border-yellow-600 active:border-b-0 active:translate-y-2 transition-all">
+             {n}
+           </button>
+         ))}
+      </div>
+    </div>
+  );
+};
+
+// 8. TREN DE NUMEROS
+const NumberSequence = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+  const [streak, setStreak] = useState(0);
+  const [seq, setSeq] = useState([]);
+  const [ans, setAns] = useState(0);
+  const [opts, setOpts] = useState([]);
+  const [missingIndex, setMissingIndex] = useState(0);
+
+  const nextSeq = () => {
+    const level = Math.floor(streak / 10);
+    const step = level + 1; 
+    const start = Math.floor(Math.random() * 10) + 1;
+    const fullSeq = [start, start + step, start + step * 2, start + step * 3];
+    const hiddenIdx = Math.floor(Math.random() * 4);
+    setMissingIndex(hiddenIdx);
+    setAns(fullSeq[hiddenIdx]);
+    setSeq(fullSeq);
+    const correctAnswer = fullSeq[hiddenIdx];
+    const o = [correctAnswer, correctAnswer + Math.floor(Math.random()*3)+1, correctAnswer - Math.floor(Math.random()*3)-1];
+    setOpts(o.sort(() => Math.random() - 0.5));
+  };
+
+  useEffect(() => { nextSeq(); }, [streak]);
+
+  const handleAns = (val) => {
+    if (val === ans) {
+      playSound('correct');
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (isDaily && newStreak >= dailyTarget) {
+          playSound('win');
+          onComplete(newStreak * 10);
+      }
+    } else {
+      playSound('wrong');
+      if (!isDaily) onComplete(streak * 10);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-8">
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         {isDaily && <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold">Misión: {streak}/{dailyTarget}</div>}
+         <div className="text-2xl font-bold text-green-600">Racha: {streak}</div>
+      </div>
+      <h2 className="text-2xl font-bold text-slate-600">¿QUÉ NÚMERO FALTA?</h2>
+      <div className="flex gap-2 items-center">
+         {seq.map((n, idx) => (
+             idx === missingIndex 
+             ? <div key={idx} className="w-16 h-16 bg-slate-200 border-dashed border-4 border-slate-300 rounded-full flex items-center justify-center text-3xl font-bold text-slate-400">?</div>
+             : <div key={idx} className="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">{n}</div>
+         ))}
+      </div>
+      <div className="flex gap-4">
+         {opts.map((n, i) => (
+           <button key={i} onClick={() => handleAns(n)} className="w-20 h-20 bg-white border-4 border-blue-200 rounded-xl text-3xl font-bold hover:scale-110 active:scale-95 transition-transform">
+             {n}
+           </button>
+         ))}
+      </div>
+    </div>
+  );
+};
+
+// 9. LABERINTO
+const MazeGame = ({ onComplete, isDaily, dailyTarget = 3 }) => {
+  const [level, setLevel] = useState(1);
+  const [pos, setPos] = useState({x:0, y:0});
+  const [maze, setMaze] = useState({ grid: [], start: {x:0,y:0}, end: {x:0,y:0} });
+  const [mazesSolved, setMazesSolved] = useState(0);
+
+  const generateMaze = (size) => {
+      let grid = Array(size).fill().map(() => Array(size).fill(1));
+      const start = {x: 0, y: 0};
+      const end = {x: size-1, y: size-1};
+      let current = { ...start };
+      grid[current.y][current.x] = 0;
+      
+      while(current.x !== end.x || current.y !== end.y) {
+         const moves = [];
+         if(current.x < size-1) moves.push({x: current.x+1, y: current.y});
+         if(current.y < size-1) moves.push({x: current.x, y: current.y+1});
+         if(moves.length === 0) break;
+         const next = moves[Math.floor(Math.random() * moves.length)];
+         grid[next.y][next.x] = 0;
+         current = next;
+      }
+      
+      for(let i=0; i<size*2; i++) {
+         let rx = Math.floor(Math.random() * size);
+         let ry = Math.floor(Math.random() * size);
+         if(grid[ry][rx] === 0) {
+             const neighbors = [{x: rx+1, y: ry}, {x: rx-1, y: ry}, {x: rx, y: ry+1}, {x: rx, y: ry-1}].filter(n => n.x>=0 && n.x<size && n.y>=0 && n.y<size && grid[n.y][n.x] === 1);
+             if(neighbors.length > 0) {
+                 const n = neighbors[Math.floor(Math.random() * neighbors.length)];
+                 grid[n.y][n.x] = 0;
+             }
+         }
+      }
+      return { grid, start, end };
+  };
+
+  useEffect(() => {
+    const gridSize = level < 3 ? 3 : level < 6 ? 5 : 7;
+    setMaze(generateMaze(gridSize));
+    setPos({x:0, y:0});
+  }, [level]);
+
+  const move = (dx, dy) => {
+    const newX = pos.x + dx;
+    const newY = pos.y + dy;
+    
+    if(newX < 0 || newX >= maze.grid.length || newY < 0 || newY >= maze.grid.length) return;
+    if (maze.grid[newY][newX] === 1) { playSound('wall'); return; }
+    
+    playSound('move');
+    setPos({ x: newX, y: newY });
+
+    if (newX === maze.end.x && newY === maze.end.y) {
+       playSound('win');
+       const newSolved = mazesSolved + 1;
+       setMazesSolved(newSolved);
+       
+       setTimeout(() => {
+         if (isDaily && newSolved >= dailyTarget) {
+             onComplete(newSolved * 50);
+         } else {
+             if (level === 20 && !isDaily) onComplete(200); 
+             setLevel(l => l + 1);
+         }
+       }, 500);
+    }
+  };
+
+  const gridSize = maze.grid.length;
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-6">
+      <div className="absolute top-4 flex justify-between w-full px-8 items-center">
+         {isDaily && <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold">Misión: {mazesSolved}/{dailyTarget}</div>}
+         <div className="text-xl font-bold text-purple-600">Nivel {level}</div>
+      </div>
+      <div 
+        className="bg-slate-800 grid gap-1 p-2 rounded-lg shadow-2xl transition-all"
+        style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)`, width: `${gridSize * 50}px`, height: `${gridSize * 50}px` }}
+      >
+         {maze.grid.map((row, y) => row.map((cell, x) => {
+           const isPlayer = x === pos.x && y === pos.y;
+           const isTarget = x === maze.end.x && y === maze.end.y;
+           const isWall = cell === 1;
+
+           return (
+             <div key={`${x}-${y}`} className={`rounded flex items-center justify-center ${isPlayer ? 'bg-blue-500 z-10' : isTarget ? 'bg-yellow-400' : isWall ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                {isPlayer && <div className="text-xl">😎</div>}
+                {isTarget && <div className="text-xl animate-spin-slow">⭐</div>}
+                {isWall && <ModernAsset type={level > 10 ? 'fire_wall' : 'wall'} />}
+             </div>
+           );
+         }))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+         <div/><button onClick={() => move(0, -1)} className="w-16 h-16 bg-blue-100 rounded-xl text-3xl shadow-md active:scale-95">⬆️</button><div/>
+         <button onClick={() => move(-1, 0)} className="w-16 h-16 bg-blue-100 rounded-xl text-3xl shadow-md active:scale-95">⬅️</button>
+         <button onClick={() => move(0, 1)} className="w-16 h-16 bg-blue-100 rounded-xl text-3xl shadow-md active:scale-95">⬇️</button>
+         <button onClick={() => move(1, 0)} className="w-16 h-16 bg-blue-100 rounded-xl text-3xl shadow-md active:scale-95">➡️</button>
+      </div>
+    </div>
+  );
+};
+
+// 10. ACTIVIDAD FÍSICA
+const AnalogActivity = ({ onComplete }) => {
+  const [challenge, setChallenge] = useState("");
+  useEffect(() => { setChallenge(PHYS_DB[Math.floor(Math.random() * PHYS_DB.length)]); }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center gap-8 p-4">
+      <div className="bg-orange-100 p-8 rounded-3xl border-4 border-orange-300 shadow-xl max-w-md">
+        <h3 className="text-2xl font-bold text-orange-800 mb-4 flex items-center justify-center gap-2"><Hammer size={32}/> RETO FÍSICO</h3>
+        <p className="text-xl text-orange-900 font-medium leading-relaxed">{challenge}</p>
+      </div>
+      <button onClick={() => { playSound('win'); onComplete(50); }} className="bg-green-500 text-white px-10 py-5 rounded-full font-bold text-2xl shadow-xl animate-bounce hover:bg-green-400">
+        ¡LO LOGRÉ!
+      </button>
+    </div>
+  );
+};
+
+// ==========================================
+// COMPONENTE PRINCIPAL
+// ==========================================
+export default function ZBGApp() {
+  const [view, setView] = useState('landing');
+  const [activeGameId, setActiveGameId] = useState(null);
+  const [xp, setXp] = useState(0);
+  const [day, setDay] = useState(1);
+  const [tutorial, setTutorial] = useState(true);
+  const [highScores, setHighScores] = useState({});
+
+  useEffect(() => {
+    const initAudio = () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); };
+    window.addEventListener('click', initAudio);
+    return () => window.removeEventListener('click', initAudio);
+  }, []);
+
+  const gamesList = [
+    { id: 'speed', title: 'Lectura Rápida', color: 'bg-red-400', icon: <Eye/>, Component: SpeedReading },
+    { id: 'attn', title: 'Atención', color: 'bg-green-400', icon: <Zap/>, Component: OddOneOut },
+    { id: 'mem', title: 'Simón Dice', color: 'bg-yellow-400', icon: <Brain/>, Component: MemorySimon },
+    { id: 'pairs', title: 'Pares', color: 'bg-cyan-400', icon: <Smile/>, Component: MemoryMatch },
+    { id: 'math', title: 'Matemáticas', color: 'bg-blue-400', icon: <Calculator/>, Component: VisualMath },
+    { id: 'word_es', title: 'Ordena Letras', color: 'bg-purple-400', icon: <BookOpen/>, Component: (props) => <WordBuilder {...props} language="es" /> },
+    { id: 'word_en', title: 'Spelling Bee', color: 'bg-pink-400', icon: <Languages/>, Component: (props) => <WordBuilder {...props} language="en" /> },
+    { id: 'story', title: 'Historias', color: 'bg-orange-400', icon: <BookOpen/>, Component: StoryTime },
+    { id: 'count', title: 'Conteo Rápido', color: 'bg-rose-400', icon: <Hash/>, Component: QuickCount },
+    { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid/>, Component: NumberSequence },
+    { id: 'maze', title: 'Laberinto', color: 'bg-indigo-400', icon: <Map/>, Component: MazeGame },
+    { id: 'phys', title: 'Físico', color: 'bg-stone-400', icon: <Hammer/>, Component: AnalogActivity },
+  ];
+
+  const handleGameComplete = (score) => {
+    setXp(prev => prev + score);
+    if (activeGameId !== 'daily_routine') {
+       setHighScores(prev => ({ ...prev, [activeGameId]: Math.max(prev[activeGameId] || 0, score) }));
+    }
+    setView(activeGameId === 'daily_routine' ? 'map' : 'arcade');
+    setActiveGameId(null);
+  };
+
+  const launchGame = (gameId) => {
+    setActiveGameId(gameId);
+    setTutorial(true);
+    setView('game');
+  };
+
+  if (view === 'landing') {
+    return (
+      <div className="min-h-screen bg-sky-200 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+        <h1 className="text-5xl md:text-7xl font-black text-green-700 mb-12 text-center drop-shadow-md bg-white/60 px-8 py-4 rounded-3xl backdrop-blur-md">
+          ZAID'S BRAIN GYM
+        </h1>
+        <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl z-10">
+          <button onClick={() => { playSound('pop'); setView('map'); }} className="bg-white border-b-8 border-r-8 border-green-600 rounded-3xl p-8 hover:bg-green-50 hover:scale-105 transition-all flex flex-col items-center shadow-2xl group">
+             <div className="w-32 h-32 bg-green-500 rounded-2xl mb-6 flex items-center justify-center text-6xl shadow-inner group-hover:rotate-3 transition-transform">🗺️</div>
+             <h2 className="text-3xl font-black text-slate-700 mb-2">MODO AVENTURA</h2>
+             <p className="text-slate-500 font-bold text-lg">Tu plan de 30 días</p>
+          </button>
+          <button onClick={() => { playSound('pop'); setView('arcade'); }} className="bg-white border-b-8 border-r-8 border-blue-600 rounded-3xl p-8 hover:bg-blue-50 hover:scale-105 transition-all flex flex-col items-center shadow-2xl group">
+             <div className="w-32 h-32 bg-blue-500 rounded-2xl mb-6 flex items-center justify-center text-6xl shadow-inner group-hover:-rotate-3 transition-transform">🎮</div>
+             <h2 className="text-3xl font-black text-slate-700 mb-2">SALA DE JUEGOS</h2>
+             <p className="text-slate-500 font-bold text-lg">¡Récords y Retos!</p>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'arcade') {
+    return (
+      <div className="min-h-screen bg-indigo-100 p-6 font-sans">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <button onClick={() => setView('landing')} className="bg-white p-3 rounded-full shadow-lg hover:scale-110"><Home className="text-slate-700"/></button>
+            <h1 className="text-4xl font-black text-slate-700">SALA DE JUEGOS</h1>
+            <div className="ml-auto bg-yellow-400 px-6 py-2 rounded-full font-bold text-yellow-900 shadow-md flex items-center gap-2">
+               <Star className="fill-current"/> {xp} XP
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {gamesList.map((game) => (
+              <button key={game.id} onClick={() => launchGame(game.id)} className="bg-white rounded-3xl p-6 shadow-xl border-b-8 border-slate-200 hover:border-slate-300 hover:-translate-y-2 transition-all flex flex-col items-center gap-2 group relative">
+                <div className={`w-20 h-20 ${game.color} rounded-2xl flex items-center justify-center text-white shadow-inner group-hover:scale-110 transition-transform`}>
+                   {React.cloneElement(game.icon, { size: 40 })}
+                </div>
+                <span className="font-bold text-lg text-slate-600 text-center leading-tight">{game.title}</span>
+                {highScores[game.id] > 0 && (
+                   <div className="mt-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                     <Trophy size={10} /> Récord: {highScores[game.id]}
+                   </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'map') {
+    return (
+      <div className="min-h-screen bg-green-700 p-4 font-sans relative">
+         <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-8 bg-slate-900/80 p-4 rounded-xl backdrop-blur text-white">
+               <button onClick={() => setView('landing')} className="flex items-center gap-2 hover:text-green-400"><ArrowLeft/> VOLVER</button>
+               <h1 className="text-2xl font-bold font-mono">DÍA {day}</h1>
+               <div className="flex items-center gap-2 text-yellow-400"><Star className="fill-current"/> {xp}</div>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+              {Array.from({ length: 30 }).map((_, i) => {
+                 const d = i + 1;
+                 const status = d === day ? 'active' : d < day ? 'done' : 'locked';
+                 return (
+                   <button key={d} onClick={() => { if(status === 'active') { setActiveGameId('daily_routine'); setView('game'); } }} disabled={status === 'locked'} className={`aspect-square rounded-xl border-b-8 flex flex-col items-center justify-center relative ${status === 'done' ? 'bg-green-600 border-green-800' : status === 'active' ? 'bg-yellow-400 border-yellow-600 animate-bounce' : 'bg-slate-600 border-slate-800 opacity-60'}`}>
+                     <span className="text-2xl font-black font-mono text-white drop-shadow-md">{d}</span>
+                     {status === 'locked' && <Lock className="text-slate-400 absolute bottom-2"/>}
+                     {status === 'done' && <CheckCircle className="text-white absolute bottom-2"/>}
+                   </button>
+                 )
+              })}
+            </div>
+         </div>
+      </div>
+    );
+  }
+
+  if (view === 'game') {
+    const isDaily = activeGameId === 'daily_routine';
+    const CurrentGame = isDaily 
+       ? gamesList[Math.floor(Math.random() * gamesList.length)].Component 
+       : gamesList.find(g => g.id === activeGameId)?.Component;
+    const gameTitle = isDaily ? "Misión Diaria" : gamesList.find(g => g.id === activeGameId)?.title;
+
+    // Calcular meta diaria basada en el día (aumenta ligeramente dificultad)
+    const baseTarget = 5;
+    const dailyTarget = Math.min(baseTarget + Math.floor(day / 7), 10); // Sube 1 cada semana
+
+    if (tutorial) return <MascotGuide text={`¡Bienvenido a ${gameTitle}! ${isDaily ? `Tu misión es llegar a ${dailyTarget} puntos.` : '¡Rompe tu récord!'}`} onNext={() => setTutorial(false)} />;
+
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+        <div className="bg-white p-4 shadow-md flex justify-between items-center">
+           <h2 className="text-xl font-black text-slate-700">{gameTitle}</h2>
+           <button onClick={() => setView(isDaily ? 'map' : 'arcade')} className="bg-red-100 text-red-500 p-2 rounded-full hover:bg-red-200"><XCircle/></button>
+        </div>
+        <div className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center">
+           <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl h-[600px] border-4 border-slate-200 relative overflow-hidden p-4">
+              {CurrentGame ? <CurrentGame onComplete={handleGameComplete} isDaily={isDaily} dailyTarget={dailyTarget} /> : <div>Error</div>}
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <div className="p-10 text-center">Cargando Zaid's Super App...</div>;
+}
