@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 import { Camera, Wand2, Image as ImageIcon, Film, RefreshCw, Download, Share2, X, Key } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { playSound } from '../../utils/audio';
@@ -19,13 +19,13 @@ const MagicDrawing = ({ onBack }) => {
     const [selectedStyle, setSelectedStyle] = useState(null);
     const [mode, setMode] = useState('image'); // image, video
     const [result, setResult] = useState(null);
-    const [apiKey, setApiKey] = useState(localStorage.getItem('GOOGLE_API_KEY') || '');
+    const [apiKey, setApiKey] = useState(localStorage.getItem('OPENAI_API_KEY') || '');
     const [showKeyInput, setShowKeyInput] = useState(false);
     const [error, setError] = useState(null);
 
     const saveKey = (key) => {
         setApiKey(key);
-        localStorage.setItem('GOOGLE_API_KEY', key);
+        localStorage.setItem('OPENAI_API_KEY', key);
         setShowKeyInput(false);
     };
 
@@ -47,64 +47,59 @@ const MagicDrawing = ({ onBack }) => {
         setError(null);
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
+            const openai = new OpenAI({
+                apiKey: apiKey,
+                dangerouslyAllowBrowser: true // Required for client-side usage
+            });
 
-            // 1. VISION: Describe the drawing using the powerful Gemini 2.5 Flash
-            const visionModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            const base64Data = imgSrc.split(',')[1];
+            console.log("1. Analyzing image with GPT-4o...");
 
-            const imagePart = {
-                inlineData: {
-                    data: base64Data,
-                    mimeType: "image/jpeg",
-                },
-            };
+            // 1. VISION: Describe the drawing using GPT-4o
+            const visionResponse = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Describe this drawing in extreme detail, focusing on the main subject, pose, actions, colors, and composition. Do not describe the artistic style (e.g. 'drawing', 'sketch'), just the content as if it were a real scene." },
+                            { type: "image_url", image_url: { url: imgSrc } },
+                        ],
+                    },
+                ],
+            });
 
-            console.log("Analyzing image...");
-            const visionResult = await visionModel.generateContent([
-                "Describe this drawing in extreme detail, focusing on the main subject, pose, actions, colors, and composition. Do not describe the artistic style (e.g. 'drawing', 'sketch'), just the content as if it were a real scene.",
-                imagePart
-            ]);
-            const description = visionResult.response.text();
+            const description = visionResponse.choices[0].message.content;
             console.log("Description:", description);
 
-            // 2. GENERATION: Create the new image using the specific Image Generation model
-            // We use the description + the style prompt
-            const genModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp-image-generation" });
-
+            // 2. GENERATION: Create the new image using DALL-E 3
             const stylePrompt = STYLES.find(s => s.id === selectedStyle).prompt;
             const finalPrompt = `${stylePrompt} Scene description: ${description}`;
 
-            console.log("Generating image with prompt:", finalPrompt);
+            console.log("Generating image with DALL-E 3...");
 
-            const genResult = await genModel.generateContent(finalPrompt);
-            const response = await genResult.response;
+            const imageResponse = await openai.images.generate({
+                model: "dall-e-3",
+                prompt: finalPrompt,
+                n: 1,
+                size: "1024x1024",
+                response_format: "b64_json"
+            });
 
-            console.log("Gen Response:", response);
+            const newImageBase64 = "data:image/png;base64," + imageResponse.data[0].b64_json;
 
-            // Inspect parts
-            const parts = response.candidates?.[0]?.content?.parts || [];
-            const imagePartResponse = parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('image/'));
-
-            if (imagePartResponse) {
-                const newImageBase64 = `data:${imagePartResponse.inlineData.mimeType};base64,${imagePartResponse.inlineData.data}`;
-                setResult(newImageBase64);
-                playSound('correct');
-                setStep('result');
-            } else {
-                // Fallback: If the model returned text instead of an image
-                console.warn("Model returned text instead of image:", response.text());
-                throw new Error("La IA respondió con texto en lugar de imagen: " + response.text().substring(0, 50) + "...");
-            }
+            setResult(newImageBase64);
+            playSound('correct');
+            setStep('result');
 
         } catch (err) {
             console.error("Generation Error:", err);
 
             let errorMessage = `Error: ${err.message || "Algo salió mal"}`;
 
-            // Check for Quota/Billing errors
-            if (err.message.includes('429') || err.message.includes('Quota') || err.message.includes('limit: 0')) {
-                errorMessage = "⚠️ Límite gratuito excedido (0 quota). Para usar este modelo experimental de imagen, necesitas activar la facturación en Google Cloud (aunque uses tus créditos gratis).";
+            if (err.message.includes('401')) {
+                errorMessage = "Error de autenticación: Revisa tu API Key de OpenAI.";
+            } else if (err.message.includes('429')) {
+                errorMessage = "Has excedido tu cuota de OpenAI. Revisa tus créditos.";
             }
 
             setError(errorMessage);
@@ -130,21 +125,21 @@ const MagicDrawing = ({ onBack }) => {
                 <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                     ✨ DIBUJOS MÁGICOS ✨
                 </h1>
-                <button onClick={() => setShowKeyInput(!showKeyInput)} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 text-yellow-400">
+                <button onClick={() => setShowKeyInput(!showKeyInput)} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 text-green-400">
                     <Key className="w-6 h-6" />
                 </button>
             </div>
 
             {showKeyInput && (
-                <div className="w-full max-w-lg mb-6 bg-slate-800 p-4 rounded-xl border border-yellow-500/50 animate-fade-in">
-                    <label className="block text-sm font-bold mb-2 text-yellow-400">Google AI Studio API Key:</label>
+                <div className="w-full max-w-lg mb-6 bg-slate-800 p-4 rounded-xl border border-green-500/50 animate-fade-in">
+                    <label className="block text-sm font-bold mb-2 text-green-400">OpenAI API Key (sk-...):</label>
                     <div className="flex gap-2">
                         <input
                             type="password"
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
                             className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white"
-                            placeholder="Pega tu key aquí..."
+                            placeholder="sk-..."
                         />
                         <button onClick={() => saveKey(apiKey)} className="bg-green-600 px-4 py-2 rounded-lg font-bold">Guardar</button>
                     </div>
@@ -242,9 +237,7 @@ const MagicDrawing = ({ onBack }) => {
                         </div>
                         <h2 className="text-3xl font-bold mb-4">Haciendo Magia...</h2>
                         <p className="text-slate-400 text-lg max-w-md">
-                            Conectando con Google Brain...
-                            <br />
-                            <span className="text-xs text-slate-500">(Usando gemini-2.5-flash)</span>
+                            Conectando con OpenAI (GPT-4o + DALL-E 3)...
                         </p>
                     </div>
                 )}
