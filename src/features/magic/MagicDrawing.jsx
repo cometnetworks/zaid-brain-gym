@@ -61,7 +61,7 @@ const MagicDrawing = ({ onBack }) => {
                     {
                         role: "user",
                         content: [
-                            { type: "text", text: "Describe this drawing in extreme detail, focusing on the main subject, pose, actions, colors, and composition. Do not describe the artistic style (e.g. 'drawing', 'sketch'), just the content as if it were a real scene." },
+                            { type: "text", text: "Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Example: 'A cat sitting in the center facing right, with a tree on the left.' Ignore the rough sketch style, focus on the content and layout." },
                             { type: "image_url", image_url: { url: imgSrc } },
                         ],
                     },
@@ -73,7 +73,8 @@ const MagicDrawing = ({ onBack }) => {
 
             // 2. GENERATION: Create the new image using DALL-E 3
             const stylePrompt = STYLES.find(s => s.id === selectedStyle).prompt;
-            const finalPrompt = `${stylePrompt} Scene description: ${description}`;
+            // We explicitly ask DALL-E to respect the composition
+            const finalPrompt = `${stylePrompt} STRICTLY follow this composition and scene description: ${description}. Keep the same camera angle and framing.`;
 
             console.log("Generating image with DALL-E 3...");
 
@@ -195,10 +196,10 @@ const MagicDrawing = ({ onBack }) => {
                                     <ImageIcon size={20} /> Imagen
                                 </button>
                                 <button
-                                    onClick={() => { playSound('pop'); setMode('video'); }}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${mode === 'video' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-700'}`}
+                                    disabled
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-slate-500 cursor-not-allowed border border-slate-700 bg-slate-800/50"
                                 >
-                                    <Film size={20} /> Video
+                                    <Film size={20} /> Video <span className="text-[10px] bg-slate-700 px-1 rounded text-slate-400">Pronto</span>
                                 </button>
                             </div>
 
