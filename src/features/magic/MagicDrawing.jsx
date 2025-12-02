@@ -48,10 +48,8 @@ const MagicDrawing = ({ onBack }) => {
 
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            // Use 'gemini-1.5-flash' as a robust default that is widely available.
-            // If the user has specific access to 'gemini-2.5-flash-image' (NanoBanana), they can swap it,
-            // but 'gemini-1.5-flash' is the safest bet for a general "it works" demonstration with standard keys.
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            // Upgrade to the confirmed available model: Gemini 2.5 Flash
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
             const base64Data = imgSrc.split(',')[1];
 
@@ -216,7 +214,7 @@ const MagicDrawing = ({ onBack }) => {
                         <p className="text-slate-400 text-lg max-w-md">
                             Conectando con Google Brain...
                             <br />
-                            <span className="text-xs text-slate-500">(Usando gemini-1.5-flash)</span>
+                            <span className="text-xs text-slate-500">(Usando gemini-2.5-flash)</span>
                         </p>
                     </div>
                 )}
