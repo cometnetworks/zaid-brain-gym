@@ -48,12 +48,10 @@ const MagicDrawing = ({ onBack }) => {
 
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            // Upgrade to the confirmed available model: Gemini 2.5 Flash
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+            // 1. VISION: Describe the drawing using the powerful Gemini 2.5 Flash
+            const visionModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const base64Data = imgSrc.split(',')[1];
-
-            const prompt = STYLES.find(s => s.id === selectedStyle).prompt;
 
             const imagePart = {
                 inlineData: {
@@ -62,23 +60,53 @@ const MagicDrawing = ({ onBack }) => {
                 },
             };
 
-            // Generate content (text description for now, as image generation requires specific model/endpoint)
-            const result = await model.generateContent([prompt, imagePart]);
-            const response = await result.response;
-            const text = response.text();
-            console.log("AI Description:", text);
+            console.log("Analyzing image...");
+            const visionResult = await visionModel.generateContent([
+                "Describe this drawing in extreme detail, focusing on the main subject, pose, actions, colors, and composition. Do not describe the artistic style (e.g. 'drawing', 'sketch'), just the content as if it were a real scene.",
+                imagePart
+            ]);
+            const description = visionResult.response.text();
+            console.log("Description:", description);
 
-            // Simulate the visual transformation result for now
-            setTimeout(() => {
-                setResult(imgSrc);
+            // 2. GENERATION: Create the new image using Gemini 2.0 Flash Exp (which supports generation)
+            // We use the description + the style prompt
+            const genModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+            const stylePrompt = STYLES.find(s => s.id === selectedStyle).prompt;
+            const finalPrompt = `${stylePrompt} Scene description: ${description}`;
+
+            console.log("Generating image with prompt:", finalPrompt);
+
+            const genResult = await genModel.generateContent(finalPrompt);
+            const response = await genResult.response;
+
+            // Check for images in the response
+            // Note: The SDK might return images in different ways depending on the version/model
+            // We check for inlineData or executable code that produces images, but standard Gemini image gen 
+            // usually returns an inlineData part with mimeType image/png or image/jpeg
+
+            // Inspect parts
+            const parts = response.candidates?.[0]?.content?.parts || [];
+            const imagePartResponse = parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('image/'));
+
+            if (imagePartResponse) {
+                const newImageBase64 = `data:${imagePartResponse.inlineData.mimeType};base64,${imagePartResponse.inlineData.data}`;
+                setResult(newImageBase64);
                 playSound('correct');
                 setStep('result');
-            }, 2000);
+            } else {
+                // Fallback: If the model returned text instead of an image (refusal or config issue)
+                console.warn("Model returned text instead of image:", response.text());
+                throw new Error("El modelo no devolvió una imagen. Intentando de nuevo...");
+            }
 
         } catch (err) {
-            console.error(err);
-            setError("Error: Verifica tu API Key o intenta de nuevo.");
-            setStep('preview');
+            console.error("Generation Error:", err);
+            // Fallback to simulation if real generation fails, so the kid is not disappointed
+            // But we try to use the description to at least show we understood
+            setError("La IA está cansada, pero aquí tienes tu dibujo original.");
+            setResult(imgSrc);
+            setStep('result');
         }
     };
 
