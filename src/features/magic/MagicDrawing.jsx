@@ -99,9 +99,16 @@ const MagicDrawing = ({ onBack }) => {
 
         } catch (err) {
             console.error("Generation Error:", err);
-            // Show the actual error to the user instead of silently failing
-            setError(`Error: ${err.message || "Algo salió mal"}`);
-            setStep('preview'); // Go back to preview so they can try again
+
+            let errorMessage = `Error: ${err.message || "Algo salió mal"}`;
+
+            // Check for Quota/Billing errors
+            if (err.message.includes('429') || err.message.includes('Quota') || err.message.includes('limit: 0')) {
+                errorMessage = "⚠️ Límite gratuito excedido (0 quota). Para usar este modelo experimental de imagen, necesitas activar la facturación en Google Cloud (aunque uses tus créditos gratis).";
+            }
+
+            setError(errorMessage);
+            setStep('preview');
         }
     };
 
