@@ -21,13 +21,23 @@ export const PHYS_DB = [
 
 // --- DICCIONARIO ESPAÑOL AMPLIADO ---
 export const WORD_DB_ES = [
-    { word: 'SOL', icon: 'sun' }, { word: 'PAN', icon: 'bread' }, { word: 'MAR', icon: 'sea' },
-    { word: 'GATO', icon: 'cat' }, { word: 'PATO', icon: 'duck' }, { word: 'LUNA', icon: 'moon' },
-    { word: 'CASA', icon: 'house' }, { word: 'PERRO', icon: 'dog' }, { word: 'LIBRO', icon: 'book' },
-    { word: 'ARBOL', icon: 'tree' }, { word: 'FLOR', icon: 'flower' }, { word: 'MESA', icon: 'table' },
-    { word: 'LAPIZ', icon: 'pencil' }, { word: 'TREN', icon: 'train' }, { word: 'LEON', icon: 'lion' },
-    { word: 'TIGRE', icon: 'tiger' }, { word: 'RATON', icon: 'mouse' }, { word: 'MANZANA', icon: 'apple' },
-    { word: 'AGUA', icon: 'water' }, { word: 'FUEGO', icon: 'fire' }, { word: 'NUBE', icon: 'cloud' }
+    // Animales
+    { word: 'GATO', icon: 'cat' }, { word: 'PERRO', icon: 'dog' }, { word: 'LEON', icon: 'lion' },
+    { word: 'PATO', icon: 'duck' }, { word: 'TIGRE', icon: 'tiger' }, { word: 'RATON', icon: 'mouse' },
+    { word: 'PEZ', icon: 'fish' }, { word: 'AVE', icon: 'bird' }, { word: 'CERDO', icon: 'pig' },
+    { word: 'RANA', icon: 'frog' }, { word: 'OSO', icon: 'bear' }, { word: 'LOBO', icon: 'wolf' },
+
+    // Naturaleza
+    { word: 'SOL', icon: 'sun' }, { word: 'LUNA', icon: 'moon' }, { word: 'MAR', icon: 'sea' },
+    { word: 'ARBOL', icon: 'tree' }, { word: 'FLOR', icon: 'flower' }, { word: 'AGUA', icon: 'water' },
+    { word: 'FUEGO', icon: 'fire' }, { word: 'NUBE', icon: 'cloud' }, { word: 'RIO', icon: 'river' },
+
+    // Objetos y Comida
+    { word: 'PAN', icon: 'bread' }, { word: 'CASA', icon: 'house' }, { word: 'LIBRO', icon: 'book' },
+    { word: 'MESA', icon: 'table' }, { word: 'LAPIZ', icon: 'pencil' }, { word: 'TREN', icon: 'train' },
+    { word: 'AUTO', icon: 'car' }, { word: 'BARCO', icon: 'ship' }, { word: 'MANZANA', icon: 'apple' },
+    { word: 'LECHE', icon: 'milk' }, { word: 'PASTEL', icon: 'cake' }, { word: 'PELOTA', icon: 'ball' },
+    { word: 'SOMBRERO', icon: 'hat' }, { word: 'SILLA', icon: 'chair' }, { word: 'CAMA', icon: 'bed' }
 ];
 
 // --- DICCIONARIO INGLÉS AMPLIADO ---
@@ -39,4 +49,53 @@ export const WORD_DB_EN = [
     { word: 'LION', icon: 'lion' }, { word: 'PIG', icon: 'pig' }, { word: 'HAT', icon: 'hat' },
     { word: 'BALL', icon: 'ball' }, { word: 'CAKE', icon: 'cake' }, { word: 'FROG', icon: 'frog' },
     { word: 'SHIP', icon: 'ship' }, { word: 'MOON', icon: 'moon' }, { word: 'DUCK', icon: 'duck' }
+];
+
+// --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
+export const CROSSWORD_LAYOUTS = [
+    {
+        id: 1,
+        width: 6, height: 6,
+        words: [
+            // GATO (Horiz) y AUTO (Vert). Cruce en 'A'.
+            // GATO: (0,1), (1,1), (2,1), (3,1). A está en (1,1).
+            // AUTO: (1,1), (1,2), (1,3), (1,4). A está en (1,1).
+            { id: 1, text: "GATO", direction: "H", x: 0, y: 1, clue: "El _____ dice miau" },
+            { id: 2, text: "AUTO", direction: "V", x: 1, y: 1, clue: "Voy a la escuela en _____" },
+            // SOL (Horiz). No cruza, simple.
+            { id: 3, text: "SOL", direction: "H", x: 2, y: 4, clue: "El _____ es amarillo y caliente" }
+        ]
+    },
+    {
+        id: 2,
+        width: 7, height: 7,
+        words: [
+            // PATO (H) en (0,0). P-A-T-O.
+            // TREN (V) en (2,0). T-R-E-N. Cruce en T.
+            // PATO: (0,0),(1,0),(2,0),(3,0). T es (2,0).
+            // TREN: (2,0),(2,1),(2,2),(2,3). T es (2,0).
+            { id: 1, text: "PATO", direction: "H", x: 0, y: 0, clue: "El _____ nada en el lago" },
+            { id: 2, text: "TREN", direction: "V", x: 2, y: 0, clue: "El _____ corre por las vías" },
+            // NUBE (H). Cruce con la N de TREN.
+            // TREN termina en N en (2,3).
+            // NUBE: (2,3),(3,3),(4,3),(5,3). N es (2,3).
+            { id: 3, text: "NUBE", direction: "H", x: 2, y: 3, clue: "La _____ está en el cielo y llueve" }
+        ]
+    },
+    {
+        id: 3,
+        width: 7, height: 7,
+        words: [
+            // MESA (H). M-E-S-A.
+            // SAL (V). S-A-L. Cruce en S.
+            // MESA: (0,2),(1,2),(2,2),(3,2). S es (2,2).
+            // SAL: (2,2),(2,3),(2,4). S es (2,2).
+            { id: 1, text: "MESA", direction: "H", x: 0, y: 2, clue: "Comemos sobre la _____" },
+            { id: 2, text: "SAL", direction: "V", x: 2, y: 2, clue: "La _____ es blanca y salada" },
+            // LUNA (H). Cruce con L de SAL.
+            // SAL termina en L en (2,4).
+            // LUNA: (2,4),(3,4),(4,4),(5,4). L es (2,4).
+            { id: 3, text: "LUNA", direction: "H", x: 2, y: 4, clue: "La _____ sale de noche" }
+        ]
+    }
 ];
