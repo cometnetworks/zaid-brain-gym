@@ -23,7 +23,9 @@ import WordBuilder from './features/games/WordBuilder';
 import StoryTime from './features/games/StoryTime';
 import QuickCount from './features/games/QuickCount';
 import NumberSequence from './features/games/NumberSequence';
-import MazeGame from './features/games/MazeGame';
+import NumberSequence from './features/games/NumberSequence';
+import ScrabbleGame from './features/games/ScrabbleGame';
+import CrosswordGame from './features/games/CrosswordGame';
 import AnalogActivity from './features/games/AnalogActivity';
 import LogicPattern from './features/games/LogicPattern';
 import LogicClassification from './features/games/LogicClassification';
@@ -59,7 +61,9 @@ export default function App() {
         { id: 'story', title: 'Historias', color: 'bg-orange-400', icon: <BookOpen />, Component: StoryTime },
         { id: 'count', title: 'Conteo Rápido', color: 'bg-rose-400', icon: <Hash />, Component: QuickCount },
         { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
-        { id: 'maze', title: 'Laberinto', color: 'bg-indigo-400', icon: <Map />, Component: MazeGame },
+        { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
+        { id: 'scrab', title: 'Scrabble Jr', color: 'bg-amber-600', icon: <Grid />, Component: ScrabbleGame },
+        { id: 'cross', title: 'Crucigrama', color: 'bg-sky-500', icon: <Grid />, Component: CrosswordGame },
         { id: 'phys', title: 'Físico', color: 'bg-stone-400', icon: <Hammer />, Component: AnalogActivity },
         { id: 'patt', title: 'Patrones', color: 'bg-orange-600', icon: <Grid />, Component: LogicPattern },
         { id: 'class', title: 'Organizar', color: 'bg-emerald-500', icon: <Target />, Component: LogicClassification },

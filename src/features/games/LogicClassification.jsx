@@ -9,26 +9,23 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
     const [currentItem, setCurrentItem] = useState(null);
     const [feedback, setFeedback] = useState(null);
 
-    // Data definitions
-    const categoryData = {
-        animals: { label: 'ANIMALES', color: 'bg-orange-100 border-orange-300', items: ['cat', 'dog', 'lion', 'pig', 'frog', 'bird', 'duck', 'fish', 'mouse', 'tiger'] },
-        vehicles: { label: 'VEHICULOS', color: 'bg-blue-100 border-blue-300', items: ['car', 'train', 'ship'] }, // "ship" used to be boat, using valid asset key
-        nature: { label: 'NATURALEZA', color: 'bg-green-100 border-green-300', items: ['sun', 'moon', 'tree', 'flower', 'water', 'cloud', 'fire'] },
-        objects: { label: 'OBJETOS', color: 'bg-purple-100 border-purple-300', items: ['book', 'pencil', 'ball', 'hat', 'chair', 'bed'] } // chair/bed might not exist, need to check assets or map safely
+    // Dictionary for labels
+    const spanishLabels = {
+        cat: "GATO", dog: "PERRO", lion: "LEÓN", pig: "CERDO", frog: "RANA", bird: "AVE", duck: "PATO", fish: "PEZ", mouse: "RATÓN", tiger: "TIGRE",
+        car: "AUTO", train: "TREN", ship: "BARCO",
+        sun: "SOL", moon: "LUNA", tree: "ÁRBOL", flower: "FLOR", water: "AGUA", cloud: "NUBE", fire: "FUEGO",
+        apple: "MANZANA", bread: "PAN", milk: "LECHE", cake: "PASTEL",
+        book: "LIBRO", pencil: "LÁPIZ", ball: "PELOTA", hat: "SOMBRERO"
     };
 
-    // Check asset availability mapping to ensure no missing icons
-    // Assets available: apple, star, cat, dog, sun, bread, sea, duck, moon, house, book, tree, flower, table, pencil, car, train, lion, tiger, mouse, water, fire, cloud, red, blue, fish, bird, milk, pig, hat, ball, cake, frog, ship, wall, fire_wall
-
     const safeData = {
-        animals: { label: 'ANIMALES', color: 'bg-orange-100 text-orange-700 border-orange-300', items: ['cat', 'dog', 'lion', 'pig', 'frog', 'bird', 'duck', 'fish', 'mouse', 'tiger'] },
-        vehicles: { label: 'VEHICULOS', color: 'bg-blue-100 text-blue-700 border-blue-300', items: ['car', 'train', 'ship'] },
-        nature: { label: 'NATURALEZA', color: 'bg-green-100 text-green-700 border-green-300', items: ['sun', 'moon', 'tree', 'flower', 'water', 'cloud', 'fire'] },
-        food: { label: 'COMIDA', color: 'bg-red-100 text-red-700 border-red-300', items: ['apple', 'bread', 'milk', 'cake'] }
+        animals: { label: 'ANIMALES', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: '🐾', items: ['cat', 'dog', 'lion', 'pig', 'frog', 'bird', 'duck', 'fish', 'mouse', 'tiger'] },
+        vehicles: { label: 'VEHÍCULOS', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: '🚦', items: ['car', 'train', 'ship'] },
+        nature: { label: 'NATURALEZA', color: 'bg-green-100 text-green-800 border-green-300', icon: '🌿', items: ['sun', 'moon', 'tree', 'flower', 'water', 'cloud', 'fire'] },
+        food: { label: 'COMIDA', color: 'bg-red-100 text-red-800 border-red-300', icon: '🍽️', items: ['apple', 'bread', 'milk', 'cake'] }
     };
 
     const nextRound = () => {
-        // Pick 2 random categories
         const keys = Object.keys(safeData).sort(() => 0.5 - Math.random()).slice(0, 2);
         const cat1 = safeData[keys[0]];
         const cat2 = safeData[keys[1]];
@@ -38,7 +35,6 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
             { id: keys[1], ...cat2 }
         ]);
 
-        // Pick an item from one of them
         const targetCatKey = Math.random() > 0.5 ? keys[0] : keys[1];
         const targetItems = safeData[targetCatKey].items;
         const item = targetItems[Math.floor(Math.random() * targetItems.length)];
@@ -62,7 +58,7 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
                 if (isDaily && score + 10 >= dailyTarget * 10) {
                     onComplete(score + 10);
                 } else {
-                    setLevel(l => l + 1); // Triggers nextRound via useEffect
+                    setLevel(l => l + 1);
                 }
             }, 800);
         } else {
@@ -75,30 +71,47 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
     if (!currentItem) return null;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full gap-4">
-            <div className="absolute top-4 flex justify-between w-full px-8">
-                <div className="text-xl font-bold text-slate-600">Nivel {level}</div>
-                <div className="text-xl font-bold text-green-600">Puntos: {score}</div>
+        <div className="flex flex-col items-center justify-center h-full gap-6 w-full max-w-2xl px-4 mx-auto">
+            <div className="absolute top-4 flex justify-between w-full px-8 z-10">
+                <div className="text-xl font-bold text-slate-600 bg-white/80 px-4 py-1 rounded-full">Nivel {level}</div>
+                <div className="text-xl font-bold text-green-600 bg-white/80 px-4 py-1 rounded-full">Puntos: {score}</div>
             </div>
 
-            <h2 className="text-2xl text-slate-700 font-bold mb-8">¿A dónde pertenece?</h2>
-
-            {/* Draggable Item Representation (Static for click prototype) */}
-            <div className={`w-32 h-32 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 border-4 transition-transform ${feedback === 'correct' ? 'scale-0 duration-500' : 'scale-100'} ${feedback === 'wrong' ? 'border-red-400 animate-shake' : 'border-slate-100'}`}>
-                <ModernAsset type={currentItem.type} size={16} />
+            <div className="mb-4 text-center">
+                <h2 className="text-2xl text-slate-700 font-bold">¿En qué grupo va?</h2>
+                <p className="text-slate-400 text-sm">Toca el botón correcto</p>
             </div>
 
-            <div className="flex gap-6 w-full px-4 justify-center">
+            {/* Draggable Item Representation */}
+            <div className={`
+                flex flex-col items-center justify-center p-6
+                bg-white rounded-[2rem] shadow-2xl border-4 
+                transition-all duration-300 transform
+                ${feedback === 'correct' ? 'scale-0 opacity-0 rotate-180' : 'scale-100 opacity-100'} 
+                ${feedback === 'wrong' ? 'border-red-400 animate-shake bg-red-50' : 'border-slate-100'}
+            `}>
+                <div className="w-32 h-32 flex items-center justify-center mb-2">
+                    <ModernAsset type={currentItem.type} size={20} />
+                </div>
+                <span className="text-3xl font-black text-slate-700 tracking-widest uppercase bg-slate-100 px-4 py-1 rounded-lg">
+                    {spanishLabels[currentItem.type] || currentItem.type}
+                </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 w-full mt-4">
                 {categories.map((cat) => (
                     <button
                         key={cat.id}
                         onClick={() => handleSelect(cat.id)}
-                        className={`flex-1 h-40 rounded-3xl border-4 border-dashed flex flex-col items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 ${cat.color} bg-opacity-50`}
+                        className={`
+                            h-48 rounded-3xl border-b-8 flex flex-col items-center justify-center gap-3 
+                            transition-all hover:scale-[1.02] active:scale-95 active:border-b-0 translate-y-0
+                            ${cat.color} border-opacity-40
+                            ${feedback === 'wrong' ? 'opacity-50' : 'opacity-100 shadow-lg'}
+                        `}
                     >
-                        <span className="text-lg font-black tracking-wider opacity-80">{cat.label}</span>
-                        <div className="w-full h-full absolute inset-0 opacity-10 flex items-center justify-center text-6xl">
-                            {cat.id === 'animals' ? '🐾' : cat.id === 'vehicles' ? '🚦' : cat.id === 'nature' ? '🌿' : '🍽️'}
-                        </div>
+                        <div className="text-6xl drop-shadow-sm filter saturate-150">{cat.icon}</div>
+                        <span className="text-xl font-black tracking-wider opacity-90 bg-white/50 px-4 py-1 rounded-full">{cat.label}</span>
                     </button>
                 ))}
             </div>
