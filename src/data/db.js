@@ -34,6 +34,10 @@ export const WORD_DB_ES = [
     { word: 'RANA', icon: 'frog', clue: 'La _____ salta y come moscas' },
     { word: 'OSO', icon: 'bear', clue: 'El _____ duerme todo el invierno' },
     { word: 'LOBO', icon: 'wolf', clue: 'El _____ aúlla a la luna llena' },
+    { word: 'VACA', icon: 'cow', clue: 'La _____ nos da leche y dice muuu' },
+    { word: 'CONEJO', icon: 'rabbit', clue: 'El _____ salta y come zanahorias' },
+    { word: 'MONO', icon: 'monkey', clue: 'El _____ come bananas y trepa árboles' },
+    { word: 'CABALLO', icon: 'horse', clue: 'El _____ galopa muy rápido' },
 
     // Naturaleza
     { word: 'SOL', icon: 'sun', clue: 'El _____ nos da luz y calor' },
@@ -45,6 +49,7 @@ export const WORD_DB_ES = [
     { word: 'FUEGO', icon: 'fire', clue: 'El _____ es caliente y quema' },
     { word: 'NUBE', icon: 'cloud', clue: 'La _____ es blanca y está en el cielo' },
     { word: 'RIO', icon: 'river', clue: 'El _____ lleva agua hasta el mar' },
+    { word: 'NIEVE', icon: 'snow', clue: 'La _____ es blanca y muy fría' },
 
     // Objetos y Comida
     { word: 'PAN', icon: 'bread', clue: 'Como _____ tostado en el desayuno' },
@@ -61,7 +66,21 @@ export const WORD_DB_ES = [
     { word: 'PELOTA', icon: 'ball', clue: 'Juego fútbol con una _____' },
     { word: 'SOMBRERO', icon: 'hat', clue: 'Me pongo el _____ en la cabeza' },
     { word: 'SILLA', icon: 'chair', clue: 'Me siento en la _____' },
-    { word: 'CAMA', icon: 'bed', clue: 'Duermo en mi _____ toda la noche' }
+    { word: 'CAMA', icon: 'bed', clue: 'Duermo en mi _____ toda la noche' },
+    { word: 'QUESO', icon: 'cheese', clue: 'El ratón come _____' },
+    { word: 'HUEVO', icon: 'egg', clue: 'La gallina pone un _____' },
+    { word: 'UVA', icon: 'grape', clue: 'La _____ es una fruta pequeña y morada' },
+
+    // Colores
+    { word: 'ROJO', icon: 'red', clue: 'La manzana es de color _____' },
+    { word: 'AZUL', icon: 'blue', clue: 'El cielo es de color _____' },
+    { word: 'VERDE', icon: 'green', clue: 'El pasto es de color _____' },
+    { word: 'AMARILLO', icon: 'yellow', clue: 'El sol es de color _____' },
+
+    // Ropa
+    { word: 'CAMISA', icon: 'shirt', clue: 'Me pongo la _____ para vestir' },
+    { word: 'ZAPATO', icon: 'shoe', clue: 'Me pongo el _____ en el pie' },
+    { word: 'VESTIDO', icon: 'dress', clue: 'La niña usa un _____ bonito' }
 ];
 
 // --- DICCIONARIO INGLÉS AMPLIADO ---
@@ -86,7 +105,19 @@ export const WORD_DB_EN = [
     { word: 'FROG', icon: 'frog', clue: 'The _____ is green and jumps' },
     { word: 'SHIP', icon: 'ship', clue: 'The _____ sails on the ocean' },
     { word: 'MOON', icon: 'moon', clue: 'The _____ comes out at night' },
-    { word: 'DUCK', icon: 'duck', clue: 'The _____ says quack quack' }
+    { word: 'DUCK', icon: 'duck', clue: 'The _____ says quack quack' },
+    { word: 'COW', icon: 'cow', clue: 'The _____ says moo' },
+    { word: 'RABBIT', icon: 'rabbit', clue: 'The _____ has long ears and hops' },
+    { word: 'MONKEY', icon: 'monkey', clue: 'The _____ climbs trees' },
+    { word: 'HORSE', icon: 'horse', clue: 'The _____ runs fast' },
+    { word: 'EGG', icon: 'egg', clue: 'The chicken lays an _____' },
+    { word: 'CHEESE', icon: 'cheese', clue: 'Mice love to eat _____' },
+    { word: 'APPLE', icon: 'apple', clue: 'A red _____ a day keeps the doctor away' },
+    { word: 'GREEN', icon: 'green', clue: 'Grass is _____' },
+    { word: 'YELLOW', icon: 'yellow', clue: 'The sun is _____' },
+    { word: 'SHIRT', icon: 'shirt', clue: 'I wear a _____ on my body' },
+    { word: 'SHOE', icon: 'shoe', clue: 'I wear a _____ on my foot' },
+    { word: 'DRESS', icon: 'dress', clue: 'She wears a pretty _____' }
 ];
 
 // --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
