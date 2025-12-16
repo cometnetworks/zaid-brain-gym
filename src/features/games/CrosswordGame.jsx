@@ -78,8 +78,8 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         for (let i = 0; i < w.text.length; i++) {
             const cx = w.direction === 'H' ? w.x + i : w.x;
             const cy = w.direction === 'V' ? w.y + i : w.y;
-            const key = `${cx},${cy} `;
-            if (gridState[key].char === '') {
+            const key = `${cx},${cy}`;
+            if (gridState[key] && gridState[key].char === '') {
                 targetIndex = i;
                 break;
             }
@@ -88,7 +88,7 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         if (targetIndex !== -1) {
             const cx = w.direction === 'H' ? w.x + targetIndex : w.x;
             const cy = w.direction === 'V' ? w.y + targetIndex : w.y;
-            const key = `${cx},${cy} `;
+            const key = `${cx},${cy}`;
 
             const newState = { ...gridState };
             newState[key] = { ...newState[key], char: char };
@@ -108,19 +108,17 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         for (let i = w.text.length - 1; i >= 0; i--) {
             const cx = w.direction === 'H' ? w.x + i : w.x;
             const cy = w.direction === 'V' ? w.y + i : w.y;
-            const key = `${cx},${cy} `;
-            if (gridState[key].char !== '') {
-                if (!isCellLocked(key, gridState)) {
-                    targetIndex = i;
-                    break;
-                }
+            const key = `${cx},${cy}`;
+            if (gridState[key] && gridState[key].char !== '') {
+                targetIndex = i;
+                break;
             }
         }
 
         if (targetIndex !== -1) {
             const cx = w.direction === 'H' ? w.x + targetIndex : w.x;
             const cy = w.direction === 'V' ? w.y + targetIndex : w.y;
-            const key = `${cx},${cy} `;
+            const key = `${cx},${cy}`;
             const newState = { ...gridState };
             newState[key] = { ...newState[key], char: '' };
             setGridState(newState);
@@ -136,8 +134,8 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         for (let i = 0; i < w.text.length; i++) {
             const cx = w.direction === 'H' ? w.x + i : w.x;
             const cy = w.direction === 'V' ? w.y + i : w.y;
-            const key = `${cx},${cy} `;
-            fullWord += currentGrid[key].char;
+            const key = `${cx},${cy}`;
+            fullWord += currentGrid[key] ? currentGrid[key].char : '';
         }
 
         if (fullWord.length === w.text.length) {
@@ -171,7 +169,7 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         for (let i = 0; i < w.text.length; i++) {
             const cx = w.direction === 'H' ? w.x + i : w.x;
             const cy = w.direction === 'V' ? w.y + i : w.y;
-            const key = `${cx},${cy} `;
+            const key = `${cx},${cy}`;
             newState[key] = { ...newState[key], char: w.text[i] };
         }
         setGridState(newState);
@@ -226,7 +224,7 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
             >
                 {Array.from({ length: layout.height }).map((_, y) =>
                     Array.from({ length: layout.width }).map((_, x) => {
-                        const key = `${x},${y} `;
+                        const key = `${x},${y}`;
                         const cell = gridState[key];
                         let isSelected = false;
                         if (selectedWord) {
@@ -245,7 +243,7 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
                                 onClick={() => ownerWord && handleCellClick(ownerWord)}
                                 style={{ width: cellSize, height: cellSize, fontSize: cellSize * 0.5 }}
                                 className={`
-rounded - lg flex items - center justify - center font - black uppercase select - none cursor - pointer transition - all
+                                    rounded-lg flex items-center justify-center font-black uppercase select-none cursor-pointer transition-all
                                     ${!cell ? 'invisible' : ''}
                                     ${cell && isSelected ? 'bg-yellow-200 border-2 border-yellow-400 scale-105 z-10 shadow-lg' : ''}
                                     ${cell && !isSelected ? 'bg-slate-100 border-2 border-slate-200' : ''}
@@ -255,7 +253,7 @@ rounded - lg flex items - center justify - center font - black uppercase select 
                                     return x === w.x && y >= w.y && y < w.y + w.text.length;
                                 }) ? 'bg-green-100 text-green-700 border-green-300' : 'text-slate-700'
                                     }
-`}
+                                `}
                             >
                                 {cell ? cell.char : ''}
                             </div>
