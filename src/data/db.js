@@ -52,6 +52,7 @@ export const WORD_DB_EN = [
 ];
 
 // --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
+// --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
 export const CROSSWORD_LAYOUTS = [
     {
         id: 1,
@@ -62,8 +63,10 @@ export const CROSSWORD_LAYOUTS = [
             // AUTO: (1,1), (1,2), (1,3), (1,4). A está en (1,1).
             { id: 1, text: "GATO", direction: "H", x: 0, y: 1, clue: "El _____ dice miau" },
             { id: 2, text: "AUTO", direction: "V", x: 1, y: 1, clue: "Voy a la escuela en _____" },
-            // SOL (Horiz). No cruza, simple.
-            { id: 3, text: "SOL", direction: "H", x: 2, y: 4, clue: "El _____ es amarillo y caliente" }
+            // SOL (Horiz). Ahora cruza con la O final de AUTO.
+            // AUTO termina en O en (1,4).
+            // SOL: (0,4), (1,4), (2,4). La O está en (1,4).
+            { id: 3, text: "SOL", direction: "H", x: 0, y: 4, clue: "El _____ es amarillo y caliente" }
         ]
     },
     {
@@ -96,6 +99,20 @@ export const CROSSWORD_LAYOUTS = [
             // SAL termina en L en (2,4).
             // LUNA: (2,4),(3,4),(4,4),(5,4). L es (2,4).
             { id: 3, text: "LUNA", direction: "H", x: 2, y: 4, clue: "La _____ sale de noche" }
+        ]
+    },
+    {
+        id: 4,
+        width: 8, height: 8,
+        words: [
+            // CASA (H) en (0,0). C-A-S-A.
+            // ARBOL (V) cruza en A (1,0). A-R-B-O-L.
+            { id: 1, text: "CASA", direction: "H", x: 0, y: 0, clue: "Vivo en una _____" },
+            { id: 2, text: "ARBOL", direction: "V", x: 1, y: 0, clue: "El _____ tiene hojas verdes" },
+            // LOBO (H) cruza en O de ARBOL (1,3).
+            // ARBOL: A(1,0), R(1,1), B(1,2), O(1,3), L(1,4).
+            // LOBO (0,3): L(0,3), O(1,3), B(2,3), O(3,3).
+            { id: 3, text: "LOBO", direction: "H", x: 0, y: 3, clue: "El _____ aúlla a la luna" }
         ]
     }
 ];
