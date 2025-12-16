@@ -11,7 +11,7 @@ const MemoryMatch = ({ onComplete, isDaily }) => {
     const [level, setLevel] = useState(1);
     const [score, setScore] = useState(0);
     const [isWon, setIsWon] = useState(false);
-    const [lives, setLives] = useState(10);
+    const [lives, setLives] = useState(20);
 
     const initGame = (lvl) => {
         const icons = ['apple', 'cat', 'dog', 'car', 'sun', 'star', 'fish', 'bird'];
@@ -25,6 +25,7 @@ const MemoryMatch = ({ onComplete, isDaily }) => {
         setFlipped([]);
         setMatched([]);
         setIsWon(false);
+        setLives(20); // Regenerate lives on new game/level
     };
 
     useEffect(() => { initGame(level); }, [level]);
@@ -83,8 +84,8 @@ const MemoryMatch = ({ onComplete, isDaily }) => {
             {isWon && <Confetti />}
             <div className="absolute top-4 flex justify-between w-full px-8 items-center">
                 <div className="flex gap-1 flex-wrap max-w-[50%]">
-                    {[...Array(10)].map((_, i) => (
-                        <Heart key={i} fill={i < lives ? "#ef4444" : "#e2e8f0"} color={i < lives ? "#ef4444" : "#cbd5e1"} className={`w-4 h-4 md:w-6 md:h-6 transition-all ${i < lives ? 'animate-pulse' : ''}`} />
+                    {[...Array(20)].map((_, i) => (
+                        <Heart key={i} fill={i < lives ? "#ef4444" : "#e2e8f0"} color={i < lives ? "#ef4444" : "#cbd5e1"} className={`w-3 h-3 md:w-5 md:h-5 transition-all ${i < lives ? 'animate-pulse' : ''}`} />
                     ))}
                 </div>
                 {isDaily && <div className="text-xl font-bold text-yellow-600 bg-yellow-100 px-3 py-1 rounded-full"><Target className="inline w-4 h-4" /> ¡Completa!</div>}

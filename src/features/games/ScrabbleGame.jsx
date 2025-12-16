@@ -9,7 +9,7 @@ const LETTER_SCORES = {
     'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
 };
 
-const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50 }) => {
+const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50, wordList = WORD_DB_ES }) => {
     const [score, setScore] = useState(0);
     const [currentWord, setCurrentWord] = useState(null);
     const [placedTiles, setPlacedTiles] = useState([]);
@@ -18,7 +18,7 @@ const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50 }) => {
 
     const nextRound = () => {
         // Find a word with length 3-6
-        const candidates = WORD_DB_ES.filter(w => w.word.length >= 3 && w.word.length <= 6);
+        const candidates = wordList.filter(w => w.word.length >= 3 && w.word.length <= 6);
         const w = candidates[Math.floor(Math.random() * candidates.length)];
 
         setCurrentWord(w);
@@ -36,7 +36,7 @@ const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50 }) => {
 
     useEffect(() => {
         nextRound();
-    }, [level]);
+    }, [level, wordList]);
 
     const handleTileClick = (tile, rackIndex) => {
         if (tile.status !== 'rack') return; // Only move from rack to board for now (simple click)

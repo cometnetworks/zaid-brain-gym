@@ -1,34 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { playSound } from '../../utils/audio';
 import ModernAsset from '../../components/ui/ModernAsset';
+import { CLASSIFICATION_DATA_ES } from '../../data/classificationData';
 
-const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
+const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5, gameData = CLASSIFICATION_DATA_ES, title }) => {
     const [score, setScore] = useState(0);
     const [level, setLevel] = useState(1);
     const [categories, setCategories] = useState([]);
     const [currentItem, setCurrentItem] = useState(null);
     const [feedback, setFeedback] = useState(null);
 
-    // Dictionary for labels
-    const spanishLabels = {
-        cat: "GATO", dog: "PERRO", lion: "LEÓN", pig: "CERDO", frog: "RANA", bird: "AVE", duck: "PATO", fish: "PEZ", mouse: "RATÓN", tiger: "TIGRE",
-        car: "AUTO", train: "TREN", ship: "BARCO",
-        sun: "SOL", moon: "LUNA", tree: "ÁRBOL", flower: "FLOR", water: "AGUA", cloud: "NUBE", fire: "FUEGO",
-        apple: "MANZANA", bread: "PAN", milk: "LECHE", cake: "PASTEL",
-        book: "LIBRO", pencil: "LÁPIZ", ball: "PELOTA", hat: "SOMBRERO"
-    };
-
-    const safeData = {
-        animals: { label: 'ANIMALES', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: '🐾', items: ['cat', 'dog', 'lion', 'pig', 'frog', 'bird', 'duck', 'fish', 'mouse', 'tiger'] },
-        vehicles: { label: 'VEHÍCULOS', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: '🚦', items: ['car', 'train', 'ship'] },
-        nature: { label: 'NATURALEZA', color: 'bg-green-100 text-green-800 border-green-300', icon: '🌿', items: ['sun', 'moon', 'tree', 'flower', 'water', 'cloud', 'fire'] },
-        food: { label: 'COMIDA', color: 'bg-red-100 text-red-800 border-red-300', icon: '🍽️', items: ['apple', 'bread', 'milk', 'cake'] }
-    };
-
     const nextRound = () => {
-        const keys = Object.keys(safeData).sort(() => 0.5 - Math.random()).slice(0, 2);
-        const cat1 = safeData[keys[0]];
-        const cat2 = safeData[keys[1]];
+        const allKeys = Object.keys(gameData.categories);
+        const keys = allKeys.sort(() => 0.5 - Math.random()).slice(0, 2);
+        const cat1 = gameData.categories[keys[0]];
+        const cat2 = gameData.categories[keys[1]];
 
         setCategories([
             { id: keys[0], ...cat1 },
@@ -36,7 +22,7 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
         ]);
 
         const targetCatKey = Math.random() > 0.5 ? keys[0] : keys[1];
-        const targetItems = safeData[targetCatKey].items;
+        const targetItems = gameData.categories[targetCatKey].items;
         const item = targetItems[Math.floor(Math.random() * targetItems.length)];
 
         setCurrentItem({ type: item, categoryId: targetCatKey });
@@ -45,7 +31,7 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
 
     useEffect(() => {
         nextRound();
-    }, [level]);
+    }, [level, gameData]);
 
     const handleSelect = (categoryId) => {
         if (feedback) return;
@@ -94,7 +80,7 @@ const LogicClassification = ({ onComplete, isDaily, dailyTarget = 5 }) => {
                     <ModernAsset type={currentItem.type} size={20} />
                 </div>
                 <span className="text-3xl font-black text-slate-700 tracking-widest uppercase bg-slate-100 px-4 py-1 rounded-lg">
-                    {spanishLabels[currentItem.type] || currentItem.type}
+                    {gameData.labels[currentItem.type] || currentItem.type}
                 </span>
             </div>
 

@@ -22,33 +22,71 @@ export const PHYS_DB = [
 // --- DICCIONARIO ESPAÑOL AMPLIADO ---
 export const WORD_DB_ES = [
     // Animales
-    { word: 'GATO', icon: 'cat' }, { word: 'PERRO', icon: 'dog' }, { word: 'LEON', icon: 'lion' },
-    { word: 'PATO', icon: 'duck' }, { word: 'TIGRE', icon: 'tiger' }, { word: 'RATON', icon: 'mouse' },
-    { word: 'PEZ', icon: 'fish' }, { word: 'AVE', icon: 'bird' }, { word: 'CERDO', icon: 'pig' },
-    { word: 'RANA', icon: 'frog' }, { word: 'OSO', icon: 'bear' }, { word: 'LOBO', icon: 'wolf' },
+    { word: 'GATO', icon: 'cat', clue: 'El _____ dice miau' },
+    { word: 'PERRO', icon: 'dog', clue: 'El _____ es el mejor amigo del hombre' },
+    { word: 'LEON', icon: 'lion', clue: 'El _____ es el rey de la selva' },
+    { word: 'PATO', icon: 'duck', clue: 'El _____ dice cuac cuac' },
+    { word: 'TIGRE', icon: 'tiger', clue: 'El _____ tiene rayas negras y naranjas' },
+    { word: 'RATON', icon: 'mouse', clue: 'El _____ come queso y huye del gato' },
+    { word: 'PEZ', icon: 'fish', clue: 'El _____ nada en el agua' },
+    { word: 'AVE', icon: 'bird', clue: 'El _____ vuela por el cielo' },
+    { word: 'CERDO', icon: 'pig', clue: 'El _____ vive en la granja y es rosado' },
+    { word: 'RANA', icon: 'frog', clue: 'La _____ salta y come moscas' },
+    { word: 'OSO', icon: 'bear', clue: 'El _____ duerme todo el invierno' },
+    { word: 'LOBO', icon: 'wolf', clue: 'El _____ aúlla a la luna llena' },
 
     // Naturaleza
-    { word: 'SOL', icon: 'sun' }, { word: 'LUNA', icon: 'moon' }, { word: 'MAR', icon: 'sea' },
-    { word: 'ARBOL', icon: 'tree' }, { word: 'FLOR', icon: 'flower' }, { word: 'AGUA', icon: 'water' },
-    { word: 'FUEGO', icon: 'fire' }, { word: 'NUBE', icon: 'cloud' }, { word: 'RIO', icon: 'river' },
+    { word: 'SOL', icon: 'sun', clue: 'El _____ nos da luz y calor' },
+    { word: 'LUNA', icon: 'moon', clue: 'La _____ sale por la noche' },
+    { word: 'MAR', icon: 'sea', clue: 'El _____ es azul y tiene olas' },
+    { word: 'ARBOL', icon: 'tree', clue: 'El _____ tiene tronco y hojas' },
+    { word: 'FLOR', icon: 'flower', clue: 'La _____ huele rico y tiene pétalos' },
+    { word: 'AGUA', icon: 'water', clue: 'Bebo _____ cuando tengo sed' },
+    { word: 'FUEGO', icon: 'fire', clue: 'El _____ es caliente y quema' },
+    { word: 'NUBE', icon: 'cloud', clue: 'La _____ es blanca y está en el cielo' },
+    { word: 'RIO', icon: 'river', clue: 'El _____ lleva agua hasta el mar' },
 
     // Objetos y Comida
-    { word: 'PAN', icon: 'bread' }, { word: 'CASA', icon: 'house' }, { word: 'LIBRO', icon: 'book' },
-    { word: 'MESA', icon: 'table' }, { word: 'LAPIZ', icon: 'pencil' }, { word: 'TREN', icon: 'train' },
-    { word: 'AUTO', icon: 'car' }, { word: 'BARCO', icon: 'ship' }, { word: 'MANZANA', icon: 'apple' },
-    { word: 'LECHE', icon: 'milk' }, { word: 'PASTEL', icon: 'cake' }, { word: 'PELOTA', icon: 'ball' },
-    { word: 'SOMBRERO', icon: 'hat' }, { word: 'SILLA', icon: 'chair' }, { word: 'CAMA', icon: 'bed' }
+    { word: 'PAN', icon: 'bread', clue: 'Como _____ tostado en el desayuno' },
+    { word: 'CASA', icon: 'house', clue: 'Vivo en una _____ con mi familia' },
+    { word: 'LIBRO', icon: 'book', clue: 'Leo un _____ antes de dormir' },
+    { word: 'MESA', icon: 'table', clue: 'Pongo los platos sobre la _____' },
+    { word: 'LAPIZ', icon: 'pencil', clue: 'Escribo y dibujo con mi _____' },
+    { word: 'TREN', icon: 'train', clue: 'El _____ viaja por las vías' },
+    { word: 'AUTO', icon: 'car', clue: 'Voy a la escuela en el _____' },
+    { word: 'BARCO', icon: 'ship', clue: 'El _____ navega por el mar' },
+    { word: 'MANZANA', icon: 'apple', clue: 'La _____ es una fruta roja y dulce' },
+    { word: 'LECHE', icon: 'milk', clue: 'La vaca nos da _____ blanca' },
+    { word: 'PASTEL', icon: 'cake', clue: 'Comemos _____ en mi cumpleaños' },
+    { word: 'PELOTA', icon: 'ball', clue: 'Juego fútbol con una _____' },
+    { word: 'SOMBRERO', icon: 'hat', clue: 'Me pongo el _____ en la cabeza' },
+    { word: 'SILLA', icon: 'chair', clue: 'Me siento en la _____' },
+    { word: 'CAMA', icon: 'bed', clue: 'Duermo en mi _____ toda la noche' }
 ];
 
 // --- DICCIONARIO INGLÉS AMPLIADO ---
 export const WORD_DB_EN = [
-    { word: 'SUN', icon: 'sun' }, { word: 'CAT', icon: 'cat' }, { word: 'DOG', icon: 'dog' },
-    { word: 'CAR', icon: 'car' }, { word: 'RED', icon: 'red' }, { word: 'BLUE', icon: 'blue' },
-    { word: 'BOOK', icon: 'book' }, { word: 'TREE', icon: 'tree' }, { word: 'FISH', icon: 'fish' },
-    { word: 'BIRD', icon: 'bird' }, { word: 'MILK', icon: 'milk' }, { word: 'STAR', icon: 'star' },
-    { word: 'LION', icon: 'lion' }, { word: 'PIG', icon: 'pig' }, { word: 'HAT', icon: 'hat' },
-    { word: 'BALL', icon: 'ball' }, { word: 'CAKE', icon: 'cake' }, { word: 'FROG', icon: 'frog' },
-    { word: 'SHIP', icon: 'ship' }, { word: 'MOON', icon: 'moon' }, { word: 'DUCK', icon: 'duck' }
+    { word: 'SUN', icon: 'sun', clue: 'The _____ is hot and yellow' },
+    { word: 'CAT', icon: 'cat', clue: 'The _____ says meow' },
+    { word: 'DOG', icon: 'dog', clue: 'The _____ barks woof woof' },
+    { word: 'CAR', icon: 'car', clue: 'I drive a _____' },
+    { word: 'RED', icon: 'red', clue: 'The apple is _____' },
+    { word: 'BLUE', icon: 'blue', clue: 'The sky is _____' },
+    { word: 'BOOK', icon: 'book', clue: 'I read a _____ covering a story' },
+    { word: 'TREE', icon: 'tree', clue: 'The _____ has green leaves' },
+    { word: 'FISH', icon: 'fish', clue: 'The _____ swims in the water' },
+    { word: 'BIRD', icon: 'bird', clue: 'The _____ flies in the sky' },
+    { word: 'MILK', icon: 'milk', clue: 'Cows give us white _____' },
+    { word: 'STAR', icon: 'star', clue: 'Twinkle twinkle little _____' },
+    { word: 'LION', icon: 'lion', clue: 'The _____ roars loud' },
+    { word: 'PIG', icon: 'pig', clue: 'The _____ lives on a farm and is pink' },
+    { word: 'HAT', icon: 'hat', clue: 'I wear a _____ on my head' },
+    { word: 'BALL', icon: 'ball', clue: 'I kick the soccer _____' },
+    { word: 'CAKE', icon: 'cake', clue: 'Happy Birthday! Let\'s eat _____' },
+    { word: 'FROG', icon: 'frog', clue: 'The _____ is green and jumps' },
+    { word: 'SHIP', icon: 'ship', clue: 'The _____ sails on the ocean' },
+    { word: 'MOON', icon: 'moon', clue: 'The _____ comes out at night' },
+    { word: 'DUCK', icon: 'duck', clue: 'The _____ says quack quack' }
 ];
 
 // --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---

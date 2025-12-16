@@ -2,36 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { playSound } from '../../utils/audio';
 import ModernAsset from '../../components/ui/ModernAsset';
 
-const SpeedReading = ({ onComplete, isDaily, dailyTarget = 60 }) => {
+import { WORD_DB_ES } from '../../data/db';
+
+const SpeedReading = ({ onComplete, isDaily, dailyTarget = 60, wordPool = WORD_DB_ES, title = "Lectura Rápida" }) => {
     const [timeLeft, setTimeLeft] = useState(isDaily ? dailyTarget : 60);
     const [score, setScore] = useState(0);
     const [currentWord, setCurrentWord] = useState(null);
     const [options, setOptions] = useState([]);
     const [showWord, setShowWord] = useState(true);
 
-    const wordPool = [
-        // Palabras simples
-        { text: "CASA", emoji: "house" }, { text: "PERRO", emoji: "dog" }, { text: "AUTO", emoji: "car" },
-        { text: "SOL", emoji: "sun" }, { text: "GATO", emoji: "cat" }, { text: "PELOTA", emoji: "ball" },
-        { text: "MANZANA", emoji: "apple" }, { text: "LIBRO", emoji: "book" }, { text: "LAPIZ", emoji: "pencil" },
-        { text: "TREN", emoji: "train" }, { text: "LEON", emoji: "lion" }, { text: "AGUA", emoji: "water" },
-        { text: "FLOR", emoji: "flower" }, { text: "ARBOL", emoji: "tree" }, { text: "PAN", emoji: "bread" },
-        { text: "LUNA", emoji: "moon" }, { text: "PATO", emoji: "duck" }, { text: "MESA", emoji: "table" },
-        { text: "PEZ", emoji: "fish" }, { text: "AVE", emoji: "bird" }, { text: "LECHE", emoji: "milk" },
-        { text: "CERDO", emoji: "pig" }, { text: "RANA", emoji: "frog" }, { text: "BARCO", emoji: "ship" },
+    // Filter wordPool to ensure it has valid items (text/word, emoji/icon)
+    // DB uses 'word', game used 'text'. Let's normalize. 
+    // Actually, let's map the incoming DB format {word, icon} to {text, emoji} or just use DB format directly.
+    // The previous hardcoded list had { text, emoji }. DB has { word, icon }.
+    // Let's adapt the component to use { word, icon }.
 
-        // Frases cortas
-        { text: "EL GATO", emoji: "cat" }, { text: "LA CASA", emoji: "house" }, { text: "UN PERRO", emoji: "dog" },
-        { text: "EL SOL", emoji: "sun" }, { text: "LA LUNA", emoji: "moon" }, { text: "MI LIBRO", emoji: "book" },
-        { text: "EL AUTO", emoji: "car" }, { text: "UNA FLOR", emoji: "flower" }, { text: "EL TREN", emoji: "train" },
-        { text: "LA MESA", emoji: "table" }, { text: "EL LEON", emoji: "lion" }, { text: "UN PEZ", emoji: "fish" }
-    ];
+    // Normalized pool check
+    const gamePool = wordPool.map(w => ({
+        text: w.word || w.text,
+        emoji: w.icon || w.emoji
+    }));
 
     const nextRound = () => {
         setShowWord(true);
-        const target = wordPool[Math.floor(Math.random() * wordPool.length)];
+        // Safety check
+        if (!gamePool || gamePool.length === 0) return;
+
+        const target = gamePool[Math.floor(Math.random() * gamePool.length)];
         setCurrentWord(target);
-        const distractors = wordPool.filter(w => w.text !== target.text).sort(() => 0.5 - Math.random()).slice(0, 2);
+
+        // Ensure distractors are unique
+        const distractors = gamePool
+            .filter(w => w.text !== target.text)
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 2);
+
         setOptions([target, ...distractors].sort(() => 0.5 - Math.random()));
         setTimeout(() => setShowWord(false), 3000);
     };

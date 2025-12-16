@@ -35,6 +35,14 @@ import StroopFocus from './features/games/StroopFocus';
 
 // New Features
 import MagicDrawing from './features/magic/MagicDrawing';
+import { WORD_DB_ES, WORD_DB_EN } from './data/db'; // Import dictionaries
+import { CLASSIFICATION_DATA_EN } from './data/classificationData';
+
+// Wrapper for English Games
+const ScrabbleGameEn = (props) => <ScrabbleGame {...props} wordList={WORD_DB_EN} />
+const CrosswordGameEn = (props) => <CrosswordGame {...props} wordList={WORD_DB_EN} title="Crossword" />
+const SpeedReadingEn = (props) => <SpeedReading {...props} wordPool={WORD_DB_EN} title="Speed Reading" />
+const LogicClassificationEn = (props) => <LogicClassification {...props} gameData={CLASSIFICATION_DATA_EN} title="Sort It Out" />
 
 export default function App() {
     const [view, setView] = useState('landing');
@@ -69,6 +77,10 @@ export default function App() {
         { id: 'build', title: 'Suma 10', color: 'bg-violet-600', icon: <Hash />, Component: MathNumberBuilder },
         { id: 'trace', title: 'Trazo Maestro', color: 'bg-stone-500', icon: <Wand2 />, Component: TraceMaster },
         { id: 'stroop', title: 'Flechas Locas', color: 'bg-red-500', icon: <Target />, Component: StroopFocus },
+        // English Versions
+        { id: 'speed-en', title: 'Speed Reading', color: 'bg-rose-500', icon: <Eye />, Component: SpeedReadingEn },
+        { id: 'scrabble-en', title: 'Scrabble English', color: 'bg-blue-600', icon: <Grid />, Component: ScrabbleGameEn },
+        { id: 'crossword-en', title: 'Crossword English', color: 'bg-indigo-500', icon: <Grid />, Component: CrosswordGameEn },
     ];
 
     const handleGameComplete = (score) => {
