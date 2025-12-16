@@ -139,6 +139,26 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1 }) => {
         }
     };
 
+    const handleHint = () => {
+        if (!selectedWord) return;
+
+        playSound('pop');
+        const w = selectedWord;
+
+        let newState = { ...gridState };
+        // Fill all characters correctly
+        for (let i = 0; i < w.text.length; i++) {
+            const cx = w.direction === 'H' ? w.x + i : w.x;
+            const cy = w.direction === 'V' ? w.y + i : w.y;
+            const key = `${cx},${cy}`;
+            newState[key] = { ...newState[key], char: w.text[i] };
+        }
+        setGridState(newState);
+
+        // Check completion instantly
+        checkWordCompletion(w, newState);
+    };
+
     return (
         <div className="flex flex-col items-center justify-center h-full w-full max-w-lg mx-auto gap-4">
             <div className="absolute top-4 flex justify-between w-full px-8 items-center">
@@ -149,12 +169,16 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1 }) => {
             {/* Clue Area - Enhanced with Sentence */}
             <div className="min-h-[100px] w-full px-4 flex items-center justify-center">
                 {selectedWord ? (
-                    <div className="animate-in fade-in zoom-in duration-300 bg-yellow-50 p-6 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm">
+                    <div
+                        onClick={handleHint}
+                        className="animate-in fade-in zoom-in duration-300 bg-yellow-50 p-6 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm cursor-help hover:bg-yellow-100 transition-colors active:scale-95 group relative"
+                    >
+                        <div className="absolute top-1 right-2 text-xs text-yellow-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">💡 Tócame para ayuda</div>
                         <p className="text-xl font-bold text-slate-700 leading-relaxed">
                             {selectedWord.clue.split('_____').map((part, i) => (
                                 <React.Fragment key={i}>
                                     {part}
-                                    {i === 0 && <span className="inline-block w-20 border-b-4 border-slate-400 mx-1"></span>}
+                                    {i === 0 && <span className="inline-block w-20 border-b-4 border-slate-400 mx-1 text-slate-400 text-sm">{selectedWord.text.split('').map(() => '_').join(' ')}</span>}
                                 </React.Fragment>
                             ))}
                         </p>
