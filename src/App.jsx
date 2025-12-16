@@ -23,7 +23,6 @@ import WordBuilder from './features/games/WordBuilder';
 import StoryTime from './features/games/StoryTime';
 import QuickCount from './features/games/QuickCount';
 import NumberSequence from './features/games/NumberSequence';
-import NumberSequence from './features/games/NumberSequence';
 import ScrabbleGame from './features/games/ScrabbleGame';
 import CrosswordGame from './features/games/CrosswordGame';
 import AnalogActivity from './features/games/AnalogActivity';
@@ -60,7 +59,6 @@ export default function App() {
         { id: 'word_en', title: 'Spelling Bee', color: 'bg-pink-400', icon: <Languages />, Component: (props) => <WordBuilder {...props} language="en" /> },
         { id: 'story', title: 'Historias', color: 'bg-orange-400', icon: <BookOpen />, Component: StoryTime },
         { id: 'count', title: 'Conteo Rápido', color: 'bg-rose-400', icon: <Hash />, Component: QuickCount },
-        { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
         { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
         { id: 'scrab', title: 'Scrabble Jr', color: 'bg-amber-600', icon: <Grid />, Component: ScrabbleGame },
         { id: 'cross', title: 'Crucigrama', color: 'bg-sky-500', icon: <Grid />, Component: CrosswordGame },
