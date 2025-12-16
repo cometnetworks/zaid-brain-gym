@@ -3,38 +3,52 @@
 // Output: Layout object { width, height, words: [{id, text, direction, x, y, clue}] }
 
 export const generateCrossword = (wordList, maxWords = 5) => {
+    let bestLayout = null;
+    let maxPlaced = 0;
+
+    // Try up to 20 times to generate a good layout
+    for (let attempt = 0; attempt < 20; attempt++) {
+        const layout = tryGenerate(wordList, maxWords);
+        if (layout && layout.words.length > maxPlaced) {
+            maxPlaced = layout.words.length;
+            bestLayout = layout;
+            // If we hit our target, stop early
+            if (maxPlaced >= maxWords) break;
+        }
+    }
+
+    return bestLayout; // Return best found, or null
+};
+
+const tryGenerate = (wordList, maxWords) => {
     // 1. Pick a random start word
     const availableWords = [...wordList].sort(() => Math.random() - 0.5);
-    const usedWords = [];
     const grid = {}; // 'x,y': char
+    const placedWords = [];
 
     if (availableWords.length === 0) return null;
 
     // Place first word horizontally at 0,0
     const firstWord = availableWords.pop();
-    const placedWords = [{
+    placedWords.push({
         id: 1,
         text: firstWord.word,
         direction: 'H',
         x: 0,
         y: 0,
         clue: firstWord.clue
-    }];
+    });
 
     // Mark grid
     for (let i = 0; i < firstWord.word.length; i++) {
         grid[`${i},0`] = firstWord.word[i];
     }
 
-    usedWords.push(firstWord);
-
     // 2. Try to place subsequent words
     let attempts = 0;
-    while (placedWords.length < maxWords && availableWords.length > 0 && attempts < 50) {
+    while (placedWords.length < maxWords && availableWords.length > 0 && attempts < 200) {
         attempts++;
         const candidate = availableWords[0];
-
-        // Find intersection point with any placed word
         let placed = false;
 
         // Try to intersect with existing placed words
@@ -46,18 +60,10 @@ export const generateCrossword = (wordList, maxWords = 5) => {
                 if (placed) break;
                 for (let j = 0; j < pWord.text.length; j++) {
                     if (candidate.word[i] === pWord.text[j]) {
-                        // Found a common letter. 
-                        // If pWord is H, candidate must be V.
-                        // If pWord is V, candidate must be H.
-
+                        // Intersection found
                         const newDir = pWord.direction === 'H' ? 'V' : 'H';
-
-                        // Calculate potential new x,y
-                        // If pWord is H at (px, py), char is at (px+j, py)
-                        // Candidate V needs to align its ith char there.
-                        // So candidate starts at (px+j, py-i)
-
                         let nx, ny;
+
                         if (pWord.direction === 'H') {
                             nx = pWord.x + j;
                             ny = pWord.y - i;
@@ -86,7 +92,10 @@ export const generateCrossword = (wordList, maxWords = 5) => {
                                 grid[`${kx},${ky}`] = candidate.word[k];
                             }
 
-                            availableWords.shift(); // Remove from available
+                            // Remove form available
+                            const index = availableWords.findIndex(w => w.word === candidate.word);
+                            if (index > -1) availableWords.splice(index, 1);
+
                             placed = true;
                         }
                     }
@@ -95,15 +104,16 @@ export const generateCrossword = (wordList, maxWords = 5) => {
         }
 
         if (!placed) {
-            // Move to back of line if couldn't place
+            // Move to back of line
             availableWords.push(availableWords.shift());
-            // If we looped through all, break to avoid infinite loop
-            if (attempts > wordList.length * 2) break;
+            if (attempts > 50) break; // Break loop if struggling
         }
     }
 
     // Normalize coordinates (shift to 0,0)
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    if (placedWords.length === 0) return null;
+
     placedWords.forEach(w => {
         if (w.direction === 'H') {
             minX = Math.min(minX, w.x);
@@ -118,37 +128,45 @@ export const generateCrossword = (wordList, maxWords = 5) => {
         }
     });
 
-    const finalWords = placedWords.map(w => ({
-        ...w,
-        x: w.x - minX,
-        y: w.y - minY
-    }));
-
     return {
         width: (maxX - minX) + 1,
         height: (maxY - minY) + 1,
-        words: finalWords
+        words: placedWords.map(w => ({ ...w, x: w.x - minX, y: w.y - minY }))
     };
 };
 
-// Check if placement collides or is adjacent incorrectly
 function isValidPlacement(word, direction, x, y, grid) {
     for (let i = 0; i < word.length; i++) {
         const cx = direction === 'H' ? x + i : x;
         const cy = direction === 'V' ? y + i : y;
         const key = `${cx},${cy}`;
 
-        // If cell is occupied
-        if (grid[key]) {
-            if (grid[key] !== word[i]) return false; // Clash
-        } else {
-            // Check immediate neighbors (classic crossword rule: no adjacent words unless crossing)
-            // But for simple intersecting logic, we mainly care about direct overwrites being valid.
-            // Strict check: if (cx,cy) is empty, ensure we don't accidentally touch another word 
-            // parallel to us.
+        // 1. Check Collision
+        if (grid[key] && grid[key] !== word[i]) return false;
 
-            // Simplified for 6 yr olds: Just ensure no overwrite clash. 
-            // The intersections handle the connectivity.
+        // 2. Check Neighbors (prevent adjacent words)
+        // Check cells perpendicular to flow direction at this position
+        // If we are placing 'H', check (cx, cy-1) and (cx, cy+1)
+        // BUT only if this specific cell (cx, cy) is NOT an intersection (was empty before)
+        // If it was occupied (grid[key]), it's a valid crossing, so neighbors are expected.
+
+        if (!grid[key]) {
+            const neighbors = [];
+            if (direction === 'H') {
+                neighbors.push(`${cx},${cy - 1}`, `${cx},${cy + 1}`);
+                // Also check ends: (x-1, y) and (x+len, y) should be empty
+                if (i === 0) neighbors.push(`${cx - 1},${cy}`);
+                if (i === word.length - 1) neighbors.push(`${cx + 1},${cy}`);
+            } else {
+                neighbors.push(`${cx - 1},${cy}`, `${cx + 1},${cy}`);
+                // Also check ends: (x, y-1) and (x, y+len) should be empty
+                if (i === 0) neighbors.push(`${cx},${cy - 1}`);
+                if (i === word.length - 1) neighbors.push(`${cx},${cy + 1}`);
+            }
+
+            for (const nKey of neighbors) {
+                if (grid[nKey]) return false; // Too close to another word
+            }
         }
     }
     return true;
