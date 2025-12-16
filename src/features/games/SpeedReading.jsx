@@ -10,10 +10,21 @@ const SpeedReading = ({ onComplete, isDaily, dailyTarget = 60 }) => {
     const [showWord, setShowWord] = useState(true);
 
     const wordPool = [
+        // Palabras simples
         { text: "CASA", emoji: "house" }, { text: "PERRO", emoji: "dog" }, { text: "AUTO", emoji: "car" },
         { text: "SOL", emoji: "sun" }, { text: "GATO", emoji: "cat" }, { text: "PELOTA", emoji: "ball" },
         { text: "MANZANA", emoji: "apple" }, { text: "LIBRO", emoji: "book" }, { text: "LAPIZ", emoji: "pencil" },
-        { text: "TREN", emoji: "train" }, { text: "LEON", emoji: "lion" }, { text: "AGUA", emoji: "water" }
+        { text: "TREN", emoji: "train" }, { text: "LEON", emoji: "lion" }, { text: "AGUA", emoji: "water" },
+        { text: "FLOR", emoji: "flower" }, { text: "ARBOL", emoji: "tree" }, { text: "PAN", emoji: "bread" },
+        { text: "LUNA", emoji: "moon" }, { text: "PATO", emoji: "duck" }, { text: "MESA", emoji: "table" },
+        { text: "PEZ", emoji: "fish" }, { text: "AVE", emoji: "bird" }, { text: "LECHE", emoji: "milk" },
+        { text: "CERDO", emoji: "pig" }, { text: "RANA", emoji: "frog" }, { text: "BARCO", emoji: "ship" },
+
+        // Frases cortas
+        { text: "EL GATO", emoji: "cat" }, { text: "LA CASA", emoji: "house" }, { text: "UN PERRO", emoji: "dog" },
+        { text: "EL SOL", emoji: "sun" }, { text: "LA LUNA", emoji: "moon" }, { text: "MI LIBRO", emoji: "book" },
+        { text: "EL AUTO", emoji: "car" }, { text: "UNA FLOR", emoji: "flower" }, { text: "EL TREN", emoji: "train" },
+        { text: "LA MESA", emoji: "table" }, { text: "EL LEON", emoji: "lion" }, { text: "UN PEZ", emoji: "fish" }
     ];
 
     const nextRound = () => {
@@ -22,7 +33,7 @@ const SpeedReading = ({ onComplete, isDaily, dailyTarget = 60 }) => {
         setCurrentWord(target);
         const distractors = wordPool.filter(w => w.text !== target.text).sort(() => 0.5 - Math.random()).slice(0, 2);
         setOptions([target, ...distractors].sort(() => 0.5 - Math.random()));
-        setTimeout(() => setShowWord(false), 1500);
+        setTimeout(() => setShowWord(false), 3000);
     };
 
     useEffect(() => {

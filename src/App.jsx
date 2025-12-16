@@ -25,6 +25,12 @@ import QuickCount from './features/games/QuickCount';
 import NumberSequence from './features/games/NumberSequence';
 import MazeGame from './features/games/MazeGame';
 import AnalogActivity from './features/games/AnalogActivity';
+import LogicPattern from './features/games/LogicPattern';
+import LogicClassification from './features/games/LogicClassification';
+import MathDiceRace from './features/games/MathDiceRace';
+import MathNumberBuilder from './features/games/MathNumberBuilder';
+import TraceMaster from './features/games/TraceMaster';
+import StroopFocus from './features/games/StroopFocus';
 
 // New Features
 import MagicDrawing from './features/magic/MagicDrawing';
@@ -55,6 +61,12 @@ export default function App() {
         { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
         { id: 'maze', title: 'Laberinto', color: 'bg-indigo-400', icon: <Map />, Component: MazeGame },
         { id: 'phys', title: 'Físico', color: 'bg-stone-400', icon: <Hammer />, Component: AnalogActivity },
+        { id: 'patt', title: 'Patrones', color: 'bg-orange-600', icon: <Grid />, Component: LogicPattern },
+        { id: 'class', title: 'Organizar', color: 'bg-emerald-500', icon: <Target />, Component: LogicClassification },
+        { id: 'dice', title: 'Dados', color: 'bg-blue-600', icon: <Calculator />, Component: MathDiceRace },
+        { id: 'build', title: 'Suma 10', color: 'bg-violet-600', icon: <Hash />, Component: MathNumberBuilder },
+        { id: 'trace', title: 'Trazo Maestro', color: 'bg-stone-500', icon: <Wand2 />, Component: TraceMaster },
+        { id: 'stroop', title: 'Flechas Locas', color: 'bg-red-500', icon: <Target />, Component: StroopFocus },
     ];
 
     const handleGameComplete = (score) => {
