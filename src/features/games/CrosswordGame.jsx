@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { playSound } from '../../utils/audio';
+import ModernAsset from '../../components/ui/ModernAsset';
 import { WORD_DB_ES, CROSSWORD_LAYOUTS } from '../../data/db';
 import { generateCrossword } from '../../utils/crosswordGen';
 
