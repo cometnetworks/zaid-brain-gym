@@ -8,6 +8,11 @@ export const STORY_DB = [
     { title: "El Gato Miau", text: "Miau come pescado. Duerme mucho en su cama suave y azul.", q: "¿Qué come Miau?", a: "PESCADO", opts: ["PESCADO", "POLLO"] },
     { title: "El Sol Solecito", text: "El sol sale por la mañana. Nos da calor y luz amarilla.", q: "¿Cuándo sale el sol?", a: "MAÑANA", opts: ["MAÑANA", "NOCHE"] },
     { title: "La Osa Rosa", text: "Rosa es una osa grande. Le gusta comer miel dulce del bosque.", q: "¿Qué come Rosa?", a: "MIEL", opts: ["MIEL", "PAN"] },
+    // New Stories
+    { title: "El Tigre Toño", text: "Toño es un tigre fuerte con rayas negras. Le gusta correr muy rápido por la selva.", q: "¿Cómo corre Toño?", a: "RÁPIDO", opts: ["RÁPIDO", "LENTO"] },
+    { title: "La Luna Lulú", text: "Lulú sale de noche. Es blanca y brilla en el cielo oscuro junto a las estrellas.", q: "¿Cuándo sale Lulú?", a: "NOCHE", opts: ["NOCHE", "DÍA"] },
+    { title: "El Pato Paco", text: "Paco nada en el lago azul. Tiene plumas amarillas y dice cuac cuac.", q: "¿De qué color son sus plumas?", a: "AMARILLAS", opts: ["AMARILLAS", "VERDES"] },
+    { title: "La Vaca Lola", text: "Lola vive en la granja. Nos da leche fresca y come pasto verde.", q: "¿Qué nos da Lola?", a: "LECHE", opts: ["LECHE", "JUGUETE"] },
 ];
 
 export const PHYS_DB = [
@@ -38,6 +43,9 @@ export const WORD_DB_ES = [
     { word: 'CONEJO', icon: 'rabbit', clue: 'El _____ salta y come zanahorias' },
     { word: 'MONO', icon: 'monkey', clue: 'El _____ come bananas y trepa árboles' },
     { word: 'CABALLO', icon: 'horse', clue: 'El _____ galopa muy rápido' },
+    { word: 'ELEFANTE', icon: 'elephant', clue: 'El _____ tiene una trompa larga' },
+    { word: 'JIRAFA', icon: 'giraffe', clue: 'La _____ tiene el cuello muy largo' },
+    { word: 'TORTUGA', icon: 'turtle', clue: 'La _____ lleva su casa en la espalda' },
 
     // Naturaleza
     { word: 'SOL', icon: 'sun', clue: 'El _____ nos da luz y calor' },
@@ -50,6 +58,7 @@ export const WORD_DB_ES = [
     { word: 'NUBE', icon: 'cloud', clue: 'La _____ es blanca y está en el cielo' },
     { word: 'RIO', icon: 'river', clue: 'El _____ lleva agua hasta el mar' },
     { word: 'NIEVE', icon: 'snow', clue: 'La _____ es blanca y muy fría' },
+    { word: 'ESTRELLA', icon: 'star', clue: 'La _____ brilla en la noche' },
 
     // Objetos y Comida
     { word: 'PAN', icon: 'bread', clue: 'Como _____ tostado en el desayuno' },
@@ -70,17 +79,27 @@ export const WORD_DB_ES = [
     { word: 'QUESO', icon: 'cheese', clue: 'El ratón come _____' },
     { word: 'HUEVO', icon: 'egg', clue: 'La gallina pone un _____' },
     { word: 'UVA', icon: 'grape', clue: 'La _____ es una fruta pequeña y morada' },
+    { word: 'RELOJ', icon: 'clock', clue: 'El _____ marca la hora' },
+    { word: 'LLAVE', icon: 'key', clue: 'Abro la puerta con la _____' },
+    { word: 'TELEFONO', icon: 'phone', clue: 'Hablo con mi abuela por _____' },
+    { word: 'REGALO', icon: 'gift', clue: 'Recibo un _____ en Navidad' },
+    { word: 'PIZZA', icon: 'pizza', clue: 'Me gusta comer _____' },
+    { word: 'HELADO', icon: 'icecream', clue: 'El _____ es frío y dulce' },
 
     // Colores
     { word: 'ROJO', icon: 'red', clue: 'La manzana es de color _____' },
     { word: 'AZUL', icon: 'blue', clue: 'El cielo es de color _____' },
     { word: 'VERDE', icon: 'green', clue: 'El pasto es de color _____' },
     { word: 'AMARILLO', icon: 'yellow', clue: 'El sol es de color _____' },
+    { word: 'BLANCO', icon: 'white', clue: 'La nieve es de color _____' },
+    { word: 'NEGRO', icon: 'black', clue: 'El carbón es de color _____' },
 
     // Ropa
     { word: 'CAMISA', icon: 'shirt', clue: 'Me pongo la _____ para vestir' },
     { word: 'ZAPATO', icon: 'shoe', clue: 'Me pongo el _____ en el pie' },
-    { word: 'VESTIDO', icon: 'dress', clue: 'La niña usa un _____ bonito' }
+    { word: 'VESTIDO', icon: 'dress', clue: 'La niña usa un _____ bonito' },
+    { word: 'PANTALON', icon: 'pants', clue: 'Uso _____ largos en invierno' },
+    { word: 'DADO', icon: 'dice', clue: 'Lanzo el _____ para jugar' },
 ];
 
 // --- DICCIONARIO INGLÉS AMPLIADO ---
@@ -117,10 +136,22 @@ export const WORD_DB_EN = [
     { word: 'YELLOW', icon: 'yellow', clue: 'The sun is _____' },
     { word: 'SHIRT', icon: 'shirt', clue: 'I wear a _____ on my body' },
     { word: 'SHOE', icon: 'shoe', clue: 'I wear a _____ on my foot' },
-    { word: 'DRESS', icon: 'dress', clue: 'She wears a pretty _____' }
+    { word: 'DRESS', icon: 'dress', clue: 'She wears a pretty _____' },
+    { word: 'PANTS', icon: 'pants', clue: 'I wear _____ on my legs' },
+    { word: 'TABLE', icon: 'table', clue: 'I put plates on the _____' },
+    { word: 'CHAIR', icon: 'chair', clue: 'I sit on the _____' },
+    { word: 'BED', icon: 'bed', clue: 'I sleep in my _____' },
+    { word: 'HOUSE', icon: 'house', clue: 'I live in a _____' },
+    { word: 'WATER', icon: 'water', clue: 'I drink _____' },
+    { word: 'FIRE', icon: 'fire', clue: '_____ is hot' },
+    { word: 'CLOUD', icon: 'cloud', clue: '_____ is in the sky' },
+    { word: 'CLOCK', icon: 'clock', clue: 'Tick tock goes the _____' },
+    { word: 'KEY', icon: 'key', clue: 'Open the door with a _____' },
+    { word: 'PHONE', icon: 'phone', clue: 'Call mom on the _____' },
+    { word: 'PIZZA', icon: 'pizza', clue: 'I love pepperoni _____' },
+    { word: 'ICE CREAM', icon: 'icecream', clue: 'Cold and sweet _____' },
 ];
 
-// --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
 // --- LAYOUTS DE CRUCIGRAMA (Nivel 1 y 2) ---
 export const CROSSWORD_LAYOUTS = [
     {

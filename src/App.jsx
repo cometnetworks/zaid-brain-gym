@@ -4,11 +4,12 @@ import {
     Play, Pause, RotateCcw, Lock, Star, Heart, Map, Hammer, HelpCircle,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Home, ChevronRight,
     BookOpen, Eye, Zap, Calculator, Grid, Hash, Trophy, Timer, Languages,
-    Volume2, VolumeX, Smile, Target, Wand2
+    Volume2, VolumeX, Smile, Target, Wand2, UserPlus, LogOut
 } from 'lucide-react';
 
 // Utilities
 import { playSound, initAudio } from './utils/audio';
+import { loadData, createProfile, switchProfile, updateProfile, getActiveProfile } from './utils/userStorage';
 
 // Components
 import MascotGuide from './components/MascotGuide';
@@ -45,15 +46,27 @@ const SpeedReadingEn = (props) => <SpeedReading {...props} wordPool={WORD_DB_EN}
 const LogicClassificationEn = (props) => <LogicClassification {...props} gameData={CLASSIFICATION_DATA_EN} title="Sort It Out" />
 
 export default function App() {
-    const [view, setView] = useState('landing');
+    const [view, setView] = useState('loading');
     const [activeGameId, setActiveGameId] = useState(null);
-    const [xp, setXp] = useState(0);
-    const [day, setDay] = useState(1);
+    const [user, setUser] = useState(null); // Current user profile object
     const [tutorial, setTutorial] = useState(true);
-    const [highScores, setHighScores] = useState({});
+
+    // For profile creation
+    const [newProfileName, setNewProfileName] = useState('');
+    const [allProfiles, setAllProfiles] = useState({});
 
     useEffect(() => {
         window.addEventListener('click', initAudio);
+        const data = loadData();
+        setAllProfiles(data.profiles);
+
+        if (data.activeProfileId && data.profiles[data.activeProfileId]) {
+            setUser(data.profiles[data.activeProfileId]);
+            setView('landing');
+        } else {
+            setView('profile_select');
+        }
+
         return () => window.removeEventListener('click', initAudio);
     }, []);
 
@@ -83,11 +96,55 @@ export default function App() {
         { id: 'crossword-en', title: 'Crossword English', color: 'bg-indigo-500', icon: <Grid />, Component: CrosswordGameEn },
     ];
 
-    const handleGameComplete = (score) => {
-        setXp(prev => prev + score);
-        if (activeGameId !== 'daily_routine') {
-            setHighScores(prev => ({ ...prev, [activeGameId]: Math.max(prev[activeGameId] || 0, score) }));
+    const handleProfileSelect = (id) => {
+        const profile = switchProfile(id);
+        if (profile) {
+            setUser(profile);
+            playSound('pop');
+            setView('landing');
         }
+    };
+
+    const handleCreateProfile = () => {
+        if (!newProfileName.trim()) return;
+        const profile = createProfile(newProfileName.trim());
+        const data = loadData();
+        setAllProfiles(data.profiles);
+        setUser(profile);
+        setNewProfileName('');
+        playSound('success');
+        setView('landing');
+    };
+
+    const handleLogout = () => {
+        setUser(null);
+        setView('profile_select');
+    };
+
+    const handleGameComplete = (score) => {
+        if (!user) return;
+
+        // Calculate new stats
+        const newXp = (user.xp || 0) + score;
+        const newHighScores = { ...user.highScores };
+
+        if (activeGameId !== 'daily_routine') {
+            newHighScores[activeGameId] = Math.max(newHighScores[activeGameId] || 0, score);
+        }
+
+        const updates = {
+            xp: newXp,
+            highScores: newHighScores,
+            stats: {
+                ...user.stats,
+                totalGames: (user.stats?.totalGames || 0) + 1,
+                lastLogin: new Date().toISOString()
+            }
+        };
+
+        const updatedUser = updateProfile(updates);
+        setUser(updatedUser);
+
         setView(activeGameId === 'daily_routine' ? 'map' : 'arcade');
         setActiveGameId(null);
     };
@@ -98,6 +155,44 @@ export default function App() {
         setView('game');
     };
 
+    if (view === 'loading') return <div className="min-h-screen bg-sky-200 flex items-center justify-center text-2xl font-bold text-sky-800">Cargando...</div>;
+
+    if (view === 'profile_select') {
+        return (
+            <div className="min-h-screen bg-sky-100 flex flex-col items-center justify-center p-4 font-sans">
+                <h1 className="text-4xl font-black text-sky-800 mb-8">¿Quién va a jugar hoy?</h1>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12 max-w-4xl">
+                    {Object.values(allProfiles).map(p => (
+                        <button key={p.id} onClick={() => handleProfileSelect(p.id)} className="bg-white p-6 rounded-3xl shadow-xl hover:scale-105 transition-transform border-b-8 border-sky-200 hover:border-sky-300 flex flex-col items-center gap-4">
+                            <div className="w-20 h-20 bg-emerald-400 rounded-full flex items-center justify-center text-4xl text-white shadow-inner">
+                                {p.name[0].toUpperCase()}
+                            </div>
+                            <span className="text-xl font-bold text-slate-700">{p.name}</span>
+                            <div className="text-xs font-bold text-yellow-600 bg-yellow-100 px-3 py-1 rounded-full flex items-center gap-1">
+                                <Star size={12} fill="currentColor" /> {p.xp} XP
+                            </div>
+                        </button>
+                    ))}
+                    {Object.keys(allProfiles).length < 5 && (
+                        <div className="bg-white/50 p-6 rounded-3xl border-4 border-dashed border-sky-300 flex flex-col items-center justify-center gap-4">
+                            <input
+                                type="text"
+                                placeholder="Nombre Nuevo"
+                                value={newProfileName}
+                                onChange={(e) => setNewProfileName(e.target.value)}
+                                className="w-full text-center p-2 rounded-xl border-2 border-sky-200 focus:border-sky-500 outline-none font-bold text-slate-600"
+                                maxLength={10}
+                            />
+                            <button onClick={handleCreateProfile} disabled={!newProfileName} className="bg-green-500 text-white px-6 py-2 rounded-full font-bold shadow-lg disabled:opacity-50 hover:bg-green-600 active:scale-95 transition-all flex items-center gap-2">
+                                <UserPlus size={20} /> Crear
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     if (view === 'magic') {
         return <MagicDrawing onBack={() => setView('landing')} />;
     }
@@ -105,6 +200,13 @@ export default function App() {
     if (view === 'landing') {
         return (
             <div className="min-h-screen bg-sky-200 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+                <div className="absolute top-4 right-4 flex gap-4">
+                    <div className="bg-white px-6 py-2 rounded-full font-bold text-slate-700 shadow-md flex items-center gap-2">
+                        <User size={20} className="text-sky-500" /> ¡Hola, {user?.name}!
+                    </div>
+                    <button onClick={handleLogout} className="bg-rose-500 text-white p-2 rounded-full shadow-md hover:bg-rose-600"><LogOut size={20} /></button>
+                </div>
+
                 <h1 className="text-5xl md:text-7xl font-black text-green-700 mb-12 text-center drop-shadow-md bg-white/60 px-8 py-4 rounded-3xl backdrop-blur-md">
                     ZAID'S BRAIN GYM
                 </h1>
@@ -130,6 +232,7 @@ export default function App() {
     }
 
     if (view === 'arcade') {
+        const highScores = user?.highScores || {};
         return (
             <div className="min-h-screen bg-indigo-100 p-6 font-sans">
                 <div className="max-w-6xl mx-auto">
@@ -137,7 +240,7 @@ export default function App() {
                         <button onClick={() => setView('landing')} className="bg-white p-3 rounded-full shadow-lg hover:scale-110"><Home className="text-slate-700" /></button>
                         <h1 className="text-4xl font-black text-slate-700">SALA DE JUEGOS</h1>
                         <div className="ml-auto bg-yellow-400 px-6 py-2 rounded-full font-bold text-yellow-900 shadow-md flex items-center gap-2">
-                            <Star className="fill-current" /> {xp} XP
+                            <Star className="fill-current" /> {user?.xp || 0} XP
                         </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -161,18 +264,19 @@ export default function App() {
     }
 
     if (view === 'map') {
+        const userDay = user?.day || 1;
         return (
             <div className="min-h-screen bg-green-700 p-4 font-sans relative">
                 <div className="max-w-4xl mx-auto">
                     <div className="flex justify-between items-center mb-8 bg-slate-900/80 p-4 rounded-xl backdrop-blur text-white">
                         <button onClick={() => setView('landing')} className="flex items-center gap-2 hover:text-green-400"><ArrowLeft /> VOLVER</button>
-                        <h1 className="text-2xl font-bold font-mono">DÍA {day}</h1>
-                        <div className="flex items-center gap-2 text-yellow-400"><Star className="fill-current" /> {xp}</div>
+                        <h1 className="text-2xl font-bold font-mono">DÍA {userDay}</h1>
+                        <div className="flex items-center gap-2 text-yellow-400"><Star className="fill-current" /> {user?.xp || 0}</div>
                     </div>
                     <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                         {Array.from({ length: 30 }).map((_, i) => {
                             const d = i + 1;
-                            const status = d === day ? 'active' : d < day ? 'done' : 'locked';
+                            const status = d === userDay ? 'active' : d < userDay ? 'done' : 'locked';
                             return (
                                 <button key={d} onClick={() => { if (status === 'active') { setActiveGameId('daily_routine'); setView('game'); } }} disabled={status === 'locked'} className={`aspect-square rounded-xl border-b-8 flex flex-col items-center justify-center relative ${status === 'done' ? 'bg-green-600 border-green-800' : status === 'active' ? 'bg-yellow-400 border-yellow-600 animate-bounce' : 'bg-slate-600 border-slate-800 opacity-60'}`}>
                                     <span className="text-2xl font-black font-mono text-white drop-shadow-md">{d}</span>
@@ -195,8 +299,9 @@ export default function App() {
         const gameTitle = isDaily ? "Misión Diaria" : gamesList.find(g => g.id === activeGameId)?.title;
 
         // Calcular meta diaria basada en el día (aumenta ligeramente dificultad)
+        const userDay = user?.day || 1;
         const baseTarget = 5;
-        const dailyTarget = Math.min(baseTarget + Math.floor(day / 7), 10); // Sube 1 cada semana
+        const dailyTarget = Math.min(baseTarget + Math.floor(userDay / 7), 10); // Sube 1 cada semana
 
         if (tutorial) return <MascotGuide text={`¡Bienvenido a ${gameTitle}! ${isDaily ? `Tu misión es llegar a ${dailyTarget} puntos.` : '¡Rompe tu récord!'}`} onNext={() => setTutorial(false)} />;
 
