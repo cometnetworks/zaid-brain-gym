@@ -195,103 +195,113 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
     const cellSize = maxDim > 8 ? 40 : 50; // Smaller cells for big grids
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full max-w-lg mx-auto gap-4">
-            <div className="absolute top-4 flex justify-between w-full px-8 items-center">
-                <div className="text-xl font-bold text-sky-800">Crucigrama</div>
-                <div className="text-sm font-bold text-sky-600">Nivel {level}</div>
-            </div>
+    return (
+        <div className="h-full w-full relative overflow-hidden">
+            {/* Scrollable Game Area */}
+            <div className={`h-full w-full overflow-y-auto flex flex-col items-center ${showKeyboard ? 'justify-start pt-4 pb-64' : 'justify-center p-4'} transition-all duration-300`}>
 
-            {/* Clue Area */}
-            <div className="min-h-[100px] w-full px-4 flex items-center justify-center">
-                {selectedWord ? (
-                    <div
-                        onClick={handleHint}
-                        className="animate-in fade-in zoom-in duration-300 bg-yellow-50 p-4 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm cursor-help hover:bg-yellow-100 transition-colors active:scale-95 group relative flex flex-col items-center gap-2"
-                    >
-                        <div className="absolute top-1 right-2 text-[10px] text-yellow-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">💡 Ayuda</div>
-                        {(() => {
-                            const found = wordList.find(dbW => dbW.word === selectedWord.text);
-                            const icon = found ? found.icon : 'star';
-                            return <ModernAsset type={icon} size={12} />;
-                        })()}
-                        <p className="text-lg font-bold text-slate-700 leading-relaxed">
-                            {selectedWord.clue.split('_____').map((part, i) => (
-                                <React.Fragment key={i}>
-                                    {part}
-                                    {i === 0 && <span className="inline-block w-16 border-b-4 border-slate-400 mx-1 text-slate-400 text-sm align-bottom h-6">{selectedWord.text.split('').map(() => '_').join(' ')}</span>}
-                                </React.Fragment>
-                            ))}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="text-slate-400 text-lg font-medium italic animate-pulse">
-                        👆 Toca una palabra
-                    </div>
-                )}
-            </div>
+                {/* Header */}
+                <div className="flex justify-between w-full px-4 mb-4 items-center shrink-0">
+                    <div className="text-xl font-bold text-sky-800">Crucigrama</div>
+                    <div className="text-sm font-bold text-sky-600">Nivel {level}</div>
+                </div>
 
-            {/* Grid */}
-            <div
-                className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-slate-100 grid gap-1 relative"
-                style={{
-                    gridTemplateColumns: `repeat(${layout.width}, 1fr)`,
-                    width: 'auto',
-                    maxWidth: '100%'
-                }}
-            >
-                {Array.from({ length: layout.height }).map((_, y) =>
-                    Array.from({ length: layout.width }).map((_, x) => {
-                        const key = `${x},${y}`;
-                        const cell = gridState[key];
-                        let isSelected = false;
-                        if (selectedWord) {
-                            if (selectedWord.direction === 'H' && y === selectedWord.y && x >= selectedWord.x && x < selectedWord.x + selectedWord.text.length) isSelected = true;
-                            if (selectedWord.direction === 'V' && x === selectedWord.x && y >= selectedWord.y && y < selectedWord.y + selectedWord.text.length) isSelected = true;
-                        }
+                {/* Clue Area */}
+                <div className="min-h-[100px] w-full px-4 flex items-center justify-center mb-6 shrink-0">
+                    {selectedWord ? (
+                        <div
+                            onClick={handleHint}
+                            className="bg-yellow-50 p-4 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm cursor-help hover:bg-yellow-100 transition-colors active:scale-95 group relative flex flex-col items-center gap-2 w-full"
+                        >
+                            <div className="absolute top-1 right-2 text-[10px] text-yellow-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">💡 Ayuda</div>
+                            {(() => {
+                                const found = wordList.find(dbW => dbW.word === selectedWord.text);
+                                const icon = found ? found.icon : 'star';
+                                return <ModernAsset type={icon} size={12} />;
+                            })()}
+                            <p className="text-lg font-bold text-slate-700 leading-relaxed">
+                                {selectedWord.clue.split('_____').map((part, i) => (
+                                    <React.Fragment key={i}>
+                                        {part}
+                                        {i === 0 && <span className="inline-block w-16 border-b-4 border-slate-400 mx-1 text-slate-400 text-sm align-bottom h-6">{selectedWord.text.split('').map(() => '_').join(' ')}</span>}
+                                    </React.Fragment>
+                                ))}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="text-slate-400 text-lg font-medium italic animate-pulse">
+                            👆 Toca una palabra
+                        </div>
+                    )}
+                </div>
 
-                        const ownerWord = layout.words.find(w => {
-                            if (w.direction === 'H') return y === w.y && x >= w.x && x < w.x + w.text.length;
-                            return x === w.x && y >= w.y && y < w.y + w.text.length;
-                        });
+                {/* Grid */}
+                <div
+                    className="bg-white p-4 rounded-3xl shadow-xl border-4 border-slate-100 grid gap-1 relative shrink-0 mb-8"
+                    style={{
+                        gridTemplateColumns: `repeat(${layout.width}, 1fr)`,
+                        width: 'auto',
+                        maxWidth: '100%',
+                        transform: showKeyboard ? 'scale(0.95)' : 'scale(1)',
+                        transition: 'transform 0.3s'
+                    }}
+                >
+                    {Array.from({ length: layout.height }).map((_, y) =>
+                        Array.from({ length: layout.width }).map((_, x) => {
+                            const key = `${x},${y}`;
+                            const cell = gridState[key];
+                            let isSelected = false;
+                            if (selectedWord) {
+                                if (selectedWord.direction === 'H' && y === selectedWord.y && x >= selectedWord.x && x < selectedWord.x + selectedWord.text.length) isSelected = true;
+                                if (selectedWord.direction === 'V' && x === selectedWord.x && y >= selectedWord.y && y < selectedWord.y + selectedWord.text.length) isSelected = true;
+                            }
 
-                        return (
-                            <div
-                                key={key}
-                                onClick={() => ownerWord && handleCellClick(ownerWord)}
-                                style={{ width: cellSize, height: cellSize, fontSize: cellSize * 0.5 }}
-                                className={`
-                                    rounded-lg flex items-center justify-center font-black uppercase select-none cursor-pointer transition-all
-                                    ${!cell ? 'invisible' : ''}
-                                    ${cell && isSelected ? 'bg-yellow-200 border-2 border-yellow-400 scale-105 z-10 shadow-lg' : ''}
-                                    ${cell && !isSelected ? 'bg-slate-100 border-2 border-slate-200' : ''}
-                                    ${cell && completedWords.some(id => {
-                                    const w = layout.words.find(wd => wd.id === id);
-                                    if (w.direction === 'H') return y === w.y && x >= w.x && x < w.x + w.text.length;
-                                    return x === w.x && y >= w.y && y < w.y + w.text.length;
-                                }) ? 'bg-green-100 text-green-700 border-green-300' : 'text-slate-700'
-                                    }
-                                `}
-                            >
-                                {cell ? cell.char : ''}
-                            </div>
-                        );
-                    })
-                )}
+                            const ownerWord = layout.words.find(w => {
+                                if (w.direction === 'H') return y === w.y && x >= w.x && x < w.x + w.text.length;
+                                return x === w.x && y >= w.y && y < w.y + w.text.length;
+                            });
+
+                            return (
+                                <div
+                                    key={key}
+                                    onClick={() => ownerWord && handleCellClick(ownerWord)}
+                                    style={{ width: cellSize, height: cellSize, fontSize: cellSize * 0.5 }}
+                                    className={`
+                                        rounded-lg flex items-center justify-center font-black uppercase select-none cursor-pointer transition-all
+                                        ${!cell ? 'invisible' : ''}
+                                        ${cell && isSelected ? 'bg-yellow-200 border-2 border-yellow-400 scale-105 z-10 shadow-lg' : ''}
+                                        ${cell && !isSelected ? 'bg-slate-100 border-2 border-slate-200' : ''}
+                                        ${cell && completedWords.some(id => {
+                                        const w = layout.words.find(wd => wd.id === id);
+                                        if (w.direction === 'H') return y === w.y && x >= w.x && x < w.x + w.text.length;
+                                        return x === w.x && y >= w.y && y < w.y + w.text.length;
+                                    }) ? 'bg-green-100 text-green-700 border-green-300' : 'text-slate-700'
+                                        }
+                                    `}
+                                >
+                                    {cell ? cell.char : ''}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
             </div>
 
             {/* Keyboard */}
             {showKeyboard && (
-                <div className="bg-slate-200 p-2 rounded-t-3xl w-full flex flex-wrap justify-center gap-1 absolute bottom-0 shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-50 animate-in slide-in-from-bottom duration-300">
-                    {"ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split('').map(char => (
-                        <button
-                            key={char}
-                            onClick={() => handleKeyPress(char)}
-                            className="w-7 h-10 bg-white rounded-md shadow-sm border-b-2 border-slate-300 font-bold text-slate-600 text-sm active:bg-slate-100 active:border-b-0 active:translate-y-1 transition-all"
-                        >
-                            {char}
-                        </button>
-                    ))}
-                    <button onClick={handleBackspace} className="w-12 h-10 bg-rose-100 text-rose-500 rounded-md shadow-sm border-b-2 border-rose-200 font-bold active:border-b-0 active:translate-y-1">⌫</button>
+                <div className="absolute bottom-0 w-full z-50">
+                    <div className="bg-slate-200/95 backdrop-blur-sm p-2 rounded-t-3xl w-full flex flex-wrap justify-center gap-1 shadow-[0_-5px_20px_rgba(0,0,0,0.1)] animate-in slide-in-from-bottom duration-300 border-t border-white/50">
+                        {"ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split('').map(char => (
+                            <button
+                                key={char}
+                                onClick={() => handleKeyPress(char)}
+                                className="w-8 h-10 bg-white rounded-md shadow-sm border-b-2 border-slate-300 font-bold text-slate-600 text-lg active:bg-slate-100 active:border-b-0 active:translate-y-1 transition-all"
+                            >
+                                {char}
+                            </button>
+                        ))}
+                        <button onClick={handleBackspace} className="w-14 h-10 bg-rose-100 text-rose-500 rounded-md shadow-sm border-b-2 border-rose-200 font-bold active:border-b-0 active:translate-y-1">⌫</button>
+                    </div>
                 </div>
             )}
         </div>
