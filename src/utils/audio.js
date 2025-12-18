@@ -1,24 +1,53 @@
 // ==========================================
 // SISTEMA DE AUDIO (SYNTH)
 // ==========================================
-const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+let audioCtx = null;
+
+const getAudioContext = () => {
+    if (!audioCtx && typeof window !== 'undefined') {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            audioCtx = new AudioContext();
+        }
+    }
+    return audioCtx;
+};
 
 const playTone = (freq, type = 'sine', duration = 0.3) => {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Create oscillator and gain node
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+    // Connect
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
-    osc.stop(audioCtx.currentTime + duration);
+    gain.connect(ctx.destination);
+
+    // Envelope (Attack/Release)
+    const now = ctx.currentTime;
+    const vol = 0.1; // Master volume
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.01); // Quick attack
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // Fade out
+
+    osc.start(now);
+    osc.stop(now + duration + 0.1);
 };
 
 export const playSound = (effect) => {
-    if (!audioCtx) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Ensure context is running (resume if suspended)
+    if (ctx.state === 'suspended') {
+        ctx.resume().catch(e => console.error("Audio resume failed", e));
+    }
 
     switch (effect) {
         case 'correct':
@@ -63,5 +92,10 @@ export const playSound = (effect) => {
 };
 
 export const initAudio = () => {
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(() => {
+            console.log("Audio Context Resumed!");
+        }).catch(e => console.error(e));
+    }
 };
