@@ -193,6 +193,65 @@ export default function App() {
         );
     }
 
+    if (view === 'stats') {
+        const stats = user?.stats || {};
+        const scores = user?.highScores || {};
+        const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+        return (
+            <div className="min-h-screen bg-slate-100 p-6 font-sans">
+                <div className="max-w-4xl mx-auto">
+                    <div className="flex items-center gap-4 mb-8">
+                        <button onClick={() => setView('landing')} className="bg-white p-3 rounded-full shadow-lg hover:scale-110"><ArrowLeft className="text-slate-700" /></button>
+                        <h1 className="text-4xl font-black text-slate-700">TU PROGRESO</h1>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-3xl shadow-lg border-b-8 border-yellow-200">
+                            <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Total Puntos</div>
+                            <div className="text-5xl font-black text-yellow-500 flex items-center gap-2">
+                                <Star fill="currentColor" /> {user?.xp || 0}
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-3xl shadow-lg border-b-8 border-blue-200">
+                            <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Juegos Jugados</div>
+                            <div className="text-5xl font-black text-blue-500 flex items-center gap-2">
+                                <Target /> {stats.totalGames || 0}
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-3xl shadow-lg border-b-8 border-green-200">
+                            <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Día Actual</div>
+                            <div className="text-5xl font-black text-green-500 flex items-center gap-2">
+                                <Map /> {user?.day || 1}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 className="text-2xl font-bold text-slate-700 mb-4">Mejores Puntuaciones</h2>
+                    <div className="bg-white rounded-3xl shadow-lg p-6 grid md:grid-cols-2 gap-4">
+                        {sortedScores.length > 0 ? sortedScores.map(([gameId, score]) => {
+                            const game = gamesList.find(g => g.id === gameId);
+                            if (!game) return null;
+                            return (
+                                <div key={gameId} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border-2 border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 ${game.color} rounded-lg flex items-center justify-center text-white`}>
+                                            {React.cloneElement(game.icon, { size: 20 })}
+                                        </div>
+                                        <span className="font-bold text-slate-600">{game.title}</span>
+                                    </div>
+                                    <span className="font-black text-xl text-slate-800">{score} pts</span>
+                                </div>
+                            );
+                        }) : (
+                            <div className="text-slate-400 italic">Juega para ver tus récords aquí</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (view === 'magic') {
         return <MagicDrawing onBack={() => setView('landing')} />;
     }
@@ -201,7 +260,7 @@ export default function App() {
         return (
             <div className="min-h-screen bg-sky-200 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
                 <div className="absolute top-4 right-4 flex gap-4">
-                    <div className="bg-white px-6 py-2 rounded-full font-bold text-slate-700 shadow-md flex items-center gap-2">
+                    <div className="bg-white px-6 py-2 rounded-full font-bold text-slate-700 shadow-md flex items-center gap-2 cursor-pointer hover:bg-slate-50" onClick={() => setView('stats')}>
                         <User size={20} className="text-sky-500" /> ¡Hola, {user?.name}!
                     </div>
                     <button onClick={handleLogout} className="bg-rose-500 text-white p-2 rounded-full shadow-md hover:bg-rose-600"><LogOut size={20} /></button>

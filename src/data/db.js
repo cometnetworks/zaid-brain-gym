@@ -64,7 +64,7 @@ export const WORD_DB_ES = [
     { word: 'PAN', icon: 'bread', clue: 'Como _____ tostado en el desayuno' },
     { word: 'CASA', icon: 'house', clue: 'Vivo en una _____ con mi familia' },
     { word: 'LIBRO', icon: 'book', clue: 'Leo un _____ antes de dormir' },
-    { word: 'MESA', icon: 'table', clue: 'Pongo los platos sobre la _____' },
+    { word: 'PLATO', icon: 'table', clue: 'Sirvo la comida en el _____' }, // "table" icon mapped to Dinner Plate in ModernAsset
     { word: 'LAPIZ', icon: 'pencil', clue: 'Escribo y dibujo con mi _____' },
     { word: 'TREN', icon: 'train', clue: 'El _____ viaja por las vías' },
     { word: 'AUTO', icon: 'car', clue: 'Voy a la escuela en el _____' },

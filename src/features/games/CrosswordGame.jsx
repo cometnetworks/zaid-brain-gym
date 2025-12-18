@@ -194,14 +194,19 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
                 {selectedWord ? (
                     <div
                         onClick={handleHint}
-                        className="animate-in fade-in zoom-in duration-300 bg-yellow-50 p-4 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm cursor-help hover:bg-yellow-100 transition-colors active:scale-95 group relative"
+                        className="animate-in fade-in zoom-in duration-300 bg-yellow-50 p-4 rounded-2xl border-4 border-yellow-200 shadow-md text-center max-w-sm cursor-help hover:bg-yellow-100 transition-colors active:scale-95 group relative flex flex-col items-center gap-2"
                     >
                         <div className="absolute top-1 right-2 text-[10px] text-yellow-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">💡 Ayuda</div>
+                        {(() => {
+                            const found = wordList.find(dbW => dbW.word === selectedWord.text);
+                            const icon = found ? found.icon : 'star';
+                            return <ModernAsset type={icon} size={12} />;
+                        })()}
                         <p className="text-lg font-bold text-slate-700 leading-relaxed">
                             {selectedWord.clue.split('_____').map((part, i) => (
                                 <React.Fragment key={i}>
                                     {part}
-                                    {i === 0 && <span className="inline-block w-16 border-b-4 border-slate-400 mx-1 text-slate-400 text-sm">{selectedWord.text.split('').map(() => '_').join(' ')}</span>}
+                                    {i === 0 && <span className="inline-block w-16 border-b-4 border-slate-400 mx-1 text-slate-400 text-sm align-bottom h-6">{selectedWord.text.split('').map(() => '_').join(' ')}</span>}
                                 </React.Fragment>
                             ))}
                         </p>

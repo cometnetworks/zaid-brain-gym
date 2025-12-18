@@ -70,6 +70,17 @@ const ModernAsset = ({ type, size = 16, className = "", count = 1 }) => {
             case 'key': return <div className="text-4xl drop-shadow-md">🔑</div>;
             case 'gift': return <div className="text-4xl drop-shadow-md">🎁</div>;
             case 'dice': return <div className="text-4xl drop-shadow-md">🎲</div>;
+            case 'sock': return <div className="text-4xl drop-shadow-md">🧦</div>;
+            case 'coat': return <div className="text-4xl drop-shadow-md">🧥</div>;
+            case 'block': return <div className="text-4xl drop-shadow-md">🧱</div>;
+            case 'kite': return <div className="text-4xl drop-shadow-md">🪁</div>;
+            case 'robot': return <div className="text-4xl drop-shadow-md">🤖</div>;
+            case 'puzzle': return <div className="text-4xl drop-shadow-md">🧩</div>;
+            case 'teddy': return <div className="text-4xl drop-shadow-md">🧸</div>;
+            case 'lamp': return <div className="text-4xl drop-shadow-md">🛋️</div>; // Using sofa/lamp combo or generic light
+            case 'sofa': return <div className="text-4xl drop-shadow-md">🛋️</div>;
+            case 'door': return <div className="text-4xl drop-shadow-md">🚪</div>;
+            case 'window': return <div className="text-4xl drop-shadow-md">🪟</div>;
             case 'wall': return <div className="w-full h-full bg-slate-700 rounded-sm border-t-4 border-slate-500 shadow-xl flex items-center justify-center text-xs">🧱</div>;
             case 'fire_wall': return <div className="w-full h-full bg-orange-600 rounded-sm border-t-4 border-orange-400 shadow-inner flex items-center justify-center text-xs animate-pulse">🔥</div>;
             default: return <div className="text-4xl">📦</div>;

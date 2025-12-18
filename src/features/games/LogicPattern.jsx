@@ -10,14 +10,28 @@ const LogicPattern = ({ onComplete, isDaily, dailyTarget = 5 }) => {
     const [showFeedback, setShowFeedback] = useState(null); // 'correct' or 'wrong'
 
     const patterns = [
+        // Level 1: Simple Alternating
         { type: 'ABAB', len: 4 },
         { type: 'AABB', len: 4 },
+        // Level 2: Sets of 3
         { type: 'ABC', len: 3 },
         { type: 'AAB', len: 3 },
+        // Level 3: Repeated + Single
+        { type: 'AAAB', len: 4 },
+        { type: 'ABBB', len: 4 },
     ];
 
     const generateRound = () => {
-        const patternType = patterns[Math.min(Math.floor((level - 1) / 3), patterns.length - 1)];
+        // Difficulty Tier Logic
+        let patternType;
+        if (level < 3) {
+            patternType = patterns[Math.floor(Math.random() * 2)]; // ABAB, AABB
+        } else if (level < 6) {
+            patternType = patterns[Math.floor(Math.random() * 2) + 2]; // ABC, AAB
+        } else {
+            patternType = patterns[Math.floor(Math.random() * patterns.length)]; // Any
+        }
+
         const items = ['apple', 'car', 'star', 'flower', 'cat', 'sun', 'fish', 'ball'].sort(() => 0.5 - Math.random());
 
         const a = items[0];
