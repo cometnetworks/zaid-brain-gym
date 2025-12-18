@@ -195,7 +195,6 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
     const cellSize = maxDim > 8 ? 40 : 50; // Smaller cells for big grids
 
     return (
-    return (
         <div className="h-full w-full relative overflow-hidden">
             {/* Scrollable Game Area */}
             <div className={`h-full w-full overflow-y-auto flex flex-col items-center ${showKeyboard ? 'justify-start pt-4 pb-64' : 'justify-center p-4'} transition-all duration-300`}>
