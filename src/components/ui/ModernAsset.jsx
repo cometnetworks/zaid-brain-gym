@@ -60,6 +60,12 @@ const ModernAsset = ({ type, size = 16, className = "", count = 1 }) => {
             case 'snow': return <div className="text-4xl drop-shadow-md">❄️</div>;
             case 'bed': return <div className="text-4xl drop-shadow-md">🛏️</div>;
             case 'chair': return <div className="text-4xl drop-shadow-md">🪑</div>;
+            case 'doll': return <div className="text-4xl drop-shadow-md">🎎</div>;
+            case 'bike': return <div className="text-4xl drop-shadow-md">🚲</div>;
+            case 'bus': return <div className="text-4xl drop-shadow-md">🚌</div>;
+            case 'plane': return <div className="text-4xl drop-shadow-md">✈️</div>;
+            case 'truck': return <div className="text-4xl drop-shadow-md">🚛</div>;
+            case 'banana': return <div className="text-4xl drop-shadow-md">🍌</div>;
             case 'elephant': return <div className="text-4xl drop-shadow-md">🐘</div>;
             case 'giraffe': return <div className="text-4xl drop-shadow-md">🦒</div>;
             case 'turtle': return <div className="text-4xl drop-shadow-md">🐢</div>;
