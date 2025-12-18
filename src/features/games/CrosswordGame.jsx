@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { playSound } from '../../utils/audio';
-import { WORD_DB_ES } from '../../data/db';
+import { WORD_DB_ES, CROSSWORD_LAYOUTS } from '../../data/db';
 import { generateCrossword } from '../../utils/crosswordGen';
 
 const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_DB_ES, title = "Crucigrama" }) => {
@@ -28,15 +28,26 @@ const CrosswordGame = ({ onComplete, isDaily, dailyTarget = 1, wordList = WORD_D
         // Generate
         let attempts = 0;
         let newLayout = null;
-        while (!newLayout && attempts < 10) {
-            newLayout = generateCrossword(wordList, wordCount);
-            attempts++;
-        }
 
-        // Fallback if generation fails (rare but possible with tight constraints)
-        if (!newLayout) {
-            // Fallback to minimal 3 words
-            newLayout = generateCrossword(wordList, 3);
+        try {
+            while (!newLayout && attempts < 10) {
+                newLayout = generateCrossword(wordList, wordCount);
+                attempts++;
+            }
+
+            // Fallback if generation fails
+            if (!newLayout) {
+                console.warn("Crossword gen failed, using fallback");
+                // Pick a random static layout
+                const randomStatic = CROSSWORD_LAYOUTS[Math.floor(Math.random() * CROSSWORD_LAYOUTS.length)];
+                // Deep copy to avoid mutating constant
+                newLayout = JSON.parse(JSON.stringify(randomStatic));
+            }
+        } catch (e) {
+            console.error("Crossword Gen Error:", e);
+            // Pick a random static layout
+            const randomStatic = CROSSWORD_LAYOUTS[Math.floor(Math.random() * CROSSWORD_LAYOUTS.length)];
+            newLayout = JSON.parse(JSON.stringify(randomStatic));
         }
 
         if (newLayout) {

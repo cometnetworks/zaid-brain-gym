@@ -107,6 +107,22 @@ const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50, wordList = WORD_D
         setRackLetters(newRack);
     };
 
+    const handleBackspace = () => {
+        // Find last filled slot
+        // We iterate from end to start to find the last placed tile
+        let lastIdx = -1;
+        for (let i = placedTiles.length - 1; i >= 0; i--) {
+            if (placedTiles[i] !== null) {
+                lastIdx = i;
+                break;
+            }
+        }
+
+        if (lastIdx !== -1) {
+            handleBoardTileClick(lastIdx);
+        }
+    };
+
     if (!currentWord) return null;
 
     return (
@@ -128,7 +144,7 @@ const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50, wordList = WORD_D
                         key={i}
                         onClick={() => handleBoardTileClick(i)}
                         className={`w-14 h-14 bg-amber-100 rounded flex items-center justify-center shadow-lg border-b-4 border-amber-300 transition-all
-                            ${tile ? 'text-amber-900' : 'opacity-30'}
+                            ${tile ? 'text-amber-900 cursor-pointer hover:bg-red-50' : 'opacity-30 cursor-default'}
                         `}
                     >
                         {tile && (
@@ -141,22 +157,33 @@ const ScrabbleGame = ({ onComplete, isDaily, dailyTarget = 50, wordList = WORD_D
                 ))}
             </div>
 
-            {/* Rack */}
-            <div className="bg-amber-900/10 p-6 rounded-3xl w-full max-w-lg flex flex-wrap justify-center gap-3 min-h-[100px]">
-                {rackLetters.map((tile, i) => {
-                    if (tile.status !== 'rack') return <div key={tile.id} className="w-14 h-14" />; // Spacer
+            {/* Controls */}
+            <div className="flex items-center gap-4 w-full max-w-lg justify-center">
+                {/* Rack */}
+                <div className="bg-amber-900/10 p-6 rounded-3xl w-full flex flex-wrap justify-center gap-3 min-h-[100px]">
+                    {rackLetters.map((tile, i) => {
+                        if (tile.status !== 'rack') return <div key={tile.id} className="w-14 h-14" />; // Spacer
 
-                    return (
-                        <button
-                            key={tile.id}
-                            onClick={() => handleTileClick(tile, i)}
-                            className="w-14 h-14 bg-amber-50 rounded-lg shadow-md border-b-4 border-amber-200 text-amber-900 relative hover:-translate-y-1 transition-transform flex items-center justify-center"
-                        >
-                            <span className="text-3xl font-bold">{tile.char}</span>
-                            <span className="absolute bottom-0 right-1 text-[10px] font-bold opacity-60">{LETTER_SCORES[tile.char] || 1}</span>
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={tile.id}
+                                onClick={() => handleTileClick(tile, i)}
+                                className="w-14 h-14 bg-amber-50 rounded-lg shadow-md border-b-4 border-amber-200 text-amber-900 relative hover:-translate-y-1 transition-transform flex items-center justify-center"
+                            >
+                                <span className="text-3xl font-bold">{tile.char}</span>
+                                <span className="absolute bottom-0 right-1 text-[10px] font-bold opacity-60">{LETTER_SCORES[tile.char] || 1}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Backspace Button */}
+                <button
+                    onClick={handleBackspace}
+                    className="w-16 h-16 bg-red-100 text-red-500 rounded-2xl shadow-md border-b-4 border-red-200 flex items-center justify-center active:scale-95 active:border-b-0 active:translate-y-1 transition-all"
+                >
+                    <span className="text-3xl font-bold">⌫</span>
+                </button>
             </div>
         </div>
     );
