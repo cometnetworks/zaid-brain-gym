@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import OpenAI from "openai";
-import { Camera, Wand2, Image as ImageIcon, Film, RefreshCw, Download, Share2, X, Key } from 'lucide-react';
+import { Camera, Wand2, Image as ImageIcon, Film, RefreshCw, Download, Share2, X, Key, AlertTriangle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { playSound } from '../../utils/audio';
 
@@ -22,6 +22,7 @@ const MagicDrawing = ({ onBack }) => {
     const [apiKey, setApiKey] = useState(localStorage.getItem('OPENAI_API_KEY') || '');
     const [showKeyInput, setShowKeyInput] = useState(false);
     const [error, setError] = useState(null);
+    const [webcamError, setWebcamError] = useState(null);
 
     const saveKey = (key) => {
         setApiKey(key);
@@ -31,7 +32,12 @@ const MagicDrawing = ({ onBack }) => {
 
     const capture = useCallback(() => {
         playSound('pop');
-        const imageSrc = webcamRef.current.getScreenshot();
+        const imageSrc = webcamRef.current?.getScreenshot();
+        if (!imageSrc) {
+            setError('No se pudo capturar la imagen. Asegúrate de que tu cámara esté activa.');
+            return;
+        }
+        setError(null);
         setImgSrc(imageSrc);
         setStep('preview');
     }, [webcamRef]);
@@ -108,6 +114,47 @@ const MagicDrawing = ({ onBack }) => {
         }
     };
 
+    const handleDownload = () => {
+        if (!result) return;
+        playSound('pop');
+        const link = document.createElement('a');
+        link.href = result;
+        link.download = `dibujo-magico-${selectedStyle}-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleShare = async () => {
+        if (!result) return;
+        playSound('pop');
+        try {
+            // Convert base64 to blob for Web Share API
+            const res = await fetch(result);
+            const blob = await res.blob();
+            const file = new File([blob], `dibujo-magico-${selectedStyle}.png`, { type: 'image/png' });
+
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: '¡Mi Dibujo Mágico! ✨',
+                    text: `¡Mira mi dibujo transformado en estilo ${STYLES.find(s => s.id === selectedStyle)?.name}!`,
+                    files: [file],
+                });
+            } else {
+                // Fallback: copy image to clipboard
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                alert('¡Imagen copiada al portapapeles!');
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error('Share error:', err);
+                alert('No se pudo compartir. Intenta descargar la imagen.');
+            }
+        }
+    };
+
     const reset = () => {
         setImgSrc(null);
         setResult(null);
@@ -154,23 +201,49 @@ const MagicDrawing = ({ onBack }) => {
                 {step === 'capture' && (
                     <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
                         <div className="relative rounded-2xl overflow-hidden border-4 border-slate-600 shadow-xl w-full max-w-lg aspect-video bg-black">
-                            <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                className="w-full h-full object-cover"
-                            />
+                            {webcamError ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-slate-800">
+                                    <AlertTriangle className="w-12 h-12 text-yellow-400 mb-4" />
+                                    <p className="text-white font-bold mb-2">No se pudo acceder a la cámara</p>
+                                    <p className="text-slate-400 text-sm">{webcamError}</p>
+                                </div>
+                            ) : (
+                                <Webcam
+                                    audio={false}
+                                    ref={webcamRef}
+                                    screenshotFormat="image/jpeg"
+                                    className="w-full h-full object-cover"
+                                    onUserMediaError={(err) => {
+                                        console.error('Webcam error:', err);
+                                        setWebcamError(
+                                            typeof err === 'string' ? err :
+                                            err?.name === 'NotAllowedError' ? 'Permiso de cámara denegado. Actívalo en la configuración de tu navegador.' :
+                                            err?.name === 'NotFoundError' ? 'No se encontró ninguna cámara conectada.' :
+                                            'Error al acceder a la cámara. Revisa los permisos.'
+                                        );
+                                    }}
+                                />
+                            )}
                         </div>
+
+                        {error && (
+                            <div className="mt-4 bg-red-500/20 text-red-300 p-3 rounded-lg border border-red-500/50 max-w-lg">
+                                {error}
+                            </div>
+                        )}
 
                         <div className="mt-8 flex gap-4">
                             <Button
                                 onClick={capture}
-                                className="rounded-full w-20 h-20 flex items-center justify-center border-4 border-white ring-4 ring-purple-500 bg-red-500 hover:scale-110 active:scale-95 transition-all"
+                                disabled={!!webcamError}
+                                className={`rounded-full w-20 h-20 flex items-center justify-center border-4 border-white ring-4 ring-purple-500 bg-red-500 hover:scale-110 active:scale-95 transition-all ${webcamError ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <Camera size={32} />
                             </Button>
                         </div>
-                        <p className="mt-4 text-slate-400 font-bold">¡Toma una foto a tu dibujo!</p>
+                        <p className="mt-4 text-slate-400 font-bold">
+                            {webcamError ? 'Revisa tu cámara para continuar' : '¡Toma una foto a tu dibujo!'}
+                        </p>
                     </div>
                 )}
 
@@ -219,7 +292,7 @@ const MagicDrawing = ({ onBack }) => {
                             <Button
                                 onClick={processMagic}
                                 disabled={!selectedStyle}
-                                className={`w-full py-6 text-xl flex items-center justify-center gap-3 ${!selectedStyle ? 'opacity-50 cursor-not-allowed' : 'animate-pulse'}`}
+                                className={`w-full py-6 text-xl flex items-center justify-center gap-3 ${!selectedStyle ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 transition-transform'}`}
                                 variant="success"
                             >
                                 <Wand2 /> {apiKey ? '¡TRANSFORMAR!' : 'Ingresa tu API Key'}
@@ -258,10 +331,10 @@ const MagicDrawing = ({ onBack }) => {
                             </div>
 
                             <div className="flex gap-4 w-full">
-                                <Button onClick={() => { playSound('pop'); alert('¡Guardado en tu galería!'); }} className="flex-1 flex items-center justify-center gap-2" variant="primary">
+                                <Button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-2" variant="primary">
                                     <Download size={20} /> Guardar
                                 </Button>
-                                <Button onClick={() => { playSound('pop'); alert('¡Compartiendo!'); }} className="flex-1 flex items-center justify-center gap-2" variant="warning">
+                                <Button onClick={handleShare} className="flex-1 flex items-center justify-center gap-2" variant="warning">
                                     <Share2 size={20} /> Compartir
                                 </Button>
                             </div>
