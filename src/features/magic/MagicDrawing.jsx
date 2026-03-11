@@ -1,9 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
-import OpenAI from "openai";
-import { Camera, Wand2, Image as ImageIcon, Film, RefreshCw, Download, Share2, X, Key, AlertTriangle } from 'lucide-react';
+import { Camera, Wand2, Image as ImageIcon, Film, RefreshCw, Download, Share2, X, AlertTriangle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { playSound } from '../../utils/audio';
+
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
+const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
 
 const STYLES = [
     { id: 'pixar', name: 'Estilo Pixar', icon: '🎨', color: 'bg-blue-500', prompt: 'Convert this drawing into a high-quality 3D Pixar-style animation character. Vibrant colors, cute features, soft lighting, 3d render.' },
@@ -19,16 +21,9 @@ const MagicDrawing = ({ onBack }) => {
     const [selectedStyle, setSelectedStyle] = useState(null);
     const [mode, setMode] = useState('image'); // image, video
     const [result, setResult] = useState(null);
-    const [apiKey, setApiKey] = useState(localStorage.getItem('OPENAI_API_KEY') || '');
-    const [showKeyInput, setShowKeyInput] = useState(false);
     const [error, setError] = useState(null);
     const [webcamError, setWebcamError] = useState(null);
-
-    const saveKey = (key) => {
-        setApiKey(key);
-        localStorage.setItem('OPENAI_API_KEY', key);
-        setShowKeyInput(false);
-    };
+    const [processingStatus, setProcessingStatus] = useState('');
 
     const capture = useCallback(() => {
         playSound('pop');
@@ -43,56 +38,89 @@ const MagicDrawing = ({ onBack }) => {
     }, [webcamRef]);
 
     const processMagic = async () => {
-        if (!selectedStyle || !apiKey) {
-            if (!apiKey) setShowKeyInput(true);
+        if (!selectedStyle) return;
+
+        if (!GROQ_API_KEY || !TOGETHER_API_KEY) {
+            setError('Faltan las API Keys. Configura VITE_GROQ_API_KEY y VITE_TOGETHER_API_KEY en tu archivo .env.local');
             return;
         }
 
         playSound('win');
         setStep('processing');
         setError(null);
+        setProcessingStatus('Analizando tu dibujo con IA...');
 
         try {
-            const openai = new OpenAI({
-                apiKey: apiKey,
-                dangerouslyAllowBrowser: true // Required for client-side usage
+            // 1. VISION: Describe the drawing using Groq (Llama 3.2 Vision)
+            console.log("1. Analyzing image with Groq Vision...");
+
+            const visionResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GROQ_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.2-90b-vision-preview',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: 'Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Example: "A cat sitting in the center facing right, with a tree on the left." Ignore the rough sketch style, focus on the content and layout.'
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: { url: imgSrc }
+                                },
+                            ],
+                        },
+                    ],
+                    max_tokens: 500,
+                }),
             });
 
-            console.log("1. Analyzing image with GPT-4o...");
+            if (!visionResponse.ok) {
+                const errData = await visionResponse.json().catch(() => ({}));
+                throw new Error(errData?.error?.message || `Groq API error: ${visionResponse.status}`);
+            }
 
-            // 1. VISION: Describe the drawing using GPT-4o
-            const visionResponse = await openai.chat.completions.create({
-                model: "gpt-4o",
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Example: 'A cat sitting in the center facing right, with a tree on the left.' Ignore the rough sketch style, focus on the content and layout." },
-                            { type: "image_url", image_url: { url: imgSrc } },
-                        ],
-                    },
-                ],
-            });
-
-            const description = visionResponse.choices[0].message.content;
+            const visionData = await visionResponse.json();
+            const description = visionData.choices[0].message.content;
             console.log("Description:", description);
 
-            // 2. GENERATION: Create the new image using DALL-E 3
+            // 2. GENERATION: Create the new image using Together AI (FLUX)
+            setProcessingStatus('¡Genial! Ahora creando tu obra de arte...');
             const stylePrompt = STYLES.find(s => s.id === selectedStyle).prompt;
-            // We explicitly ask DALL-E to respect the composition
             const finalPrompt = `${stylePrompt} STRICTLY follow this composition and scene description: ${description}. Keep the same camera angle and framing.`;
 
-            console.log("Generating image with DALL-E 3...");
+            console.log("2. Generating image with Together AI FLUX...");
 
-            const imageResponse = await openai.images.generate({
-                model: "dall-e-3",
-                prompt: finalPrompt,
-                n: 1,
-                size: "1024x1024",
-                response_format: "b64_json"
+            const imageResponse = await fetch('https://api.together.xyz/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: 'black-forest-labs/FLUX.1-schnell',
+                    prompt: finalPrompt,
+                    width: 1024,
+                    height: 1024,
+                    steps: 4,
+                    n: 1,
+                    response_format: 'b64_json',
+                }),
             });
 
-            const newImageBase64 = "data:image/png;base64," + imageResponse.data[0].b64_json;
+            if (!imageResponse.ok) {
+                const errData = await imageResponse.json().catch(() => ({}));
+                throw new Error(errData?.error?.message || `Together AI error: ${imageResponse.status}`);
+            }
+
+            const imageData = await imageResponse.json();
+            const newImageBase64 = "data:image/png;base64," + imageData.data[0].b64_json;
 
             setResult(newImageBase64);
             playSound('correct');
@@ -103,10 +131,10 @@ const MagicDrawing = ({ onBack }) => {
 
             let errorMessage = `Error: ${err.message || "Algo salió mal"}`;
 
-            if (err.message.includes('401')) {
-                errorMessage = "Error de autenticación: Revisa tu API Key de OpenAI.";
-            } else if (err.message.includes('429')) {
-                errorMessage = "Has excedido tu cuota de OpenAI. Revisa tus créditos.";
+            if (err.message?.includes('401') || err.message?.includes('auth')) {
+                errorMessage = "Error de autenticación: Revisa tus API Keys (Groq / Together AI).";
+            } else if (err.message?.includes('429') || err.message?.includes('rate')) {
+                errorMessage = "Has excedido tu cuota. Espera un momento e intenta de nuevo.";
             }
 
             setError(errorMessage);
@@ -129,7 +157,6 @@ const MagicDrawing = ({ onBack }) => {
         if (!result) return;
         playSound('pop');
         try {
-            // Convert base64 to blob for Web Share API
             const res = await fetch(result);
             const blob = await res.blob();
             const file = new File([blob], `dibujo-magico-${selectedStyle}.png`, { type: 'image/png' });
@@ -141,7 +168,6 @@ const MagicDrawing = ({ onBack }) => {
                     files: [file],
                 });
             } else {
-                // Fallback: copy image to clipboard
                 await navigator.clipboard.write([
                     new ClipboardItem({ 'image/png': blob })
                 ]);
@@ -161,6 +187,7 @@ const MagicDrawing = ({ onBack }) => {
         setStep('capture');
         setSelectedStyle(null);
         setError(null);
+        setProcessingStatus('');
     };
 
     return (
@@ -173,27 +200,18 @@ const MagicDrawing = ({ onBack }) => {
                 <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                     ✨ DIBUJOS MÁGICOS ✨
                 </h1>
-                <button onClick={() => setShowKeyInput(!showKeyInput)} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 text-green-400">
-                    <Key className="w-6 h-6" />
-                </button>
+                <div className="w-10" /> {/* Spacer for alignment */}
             </div>
 
-            {showKeyInput && (
-                <div className="w-full max-w-lg mb-6 bg-slate-800 p-4 rounded-xl border border-green-500/50 animate-fade-in">
-                    <label className="block text-sm font-bold mb-2 text-green-400">OpenAI API Key (sk-...):</label>
-                    <div className="flex gap-2">
-                        <input
-                            type="password"
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white"
-                            placeholder="sk-..."
-                        />
-                        <button onClick={() => saveKey(apiKey)} className="bg-green-600 px-4 py-2 rounded-lg font-bold">Guardar</button>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">Se guardará en tu navegador localmente.</p>
-                </div>
-            )}
+            {/* API Status Badge */}
+            <div className="mb-4 flex gap-2">
+                <span className={`text-xs px-3 py-1 rounded-full font-bold ${GROQ_API_KEY ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
+                    {GROQ_API_KEY ? '✓ Groq' : '✗ Groq'}
+                </span>
+                <span className={`text-xs px-3 py-1 rounded-full font-bold ${TOGETHER_API_KEY ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
+                    {TOGETHER_API_KEY ? '✓ Together AI' : '✗ Together AI'}
+                </span>
+            </div>
 
             <div className="w-full max-w-4xl bg-slate-800 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-700 min-h-[600px] flex flex-col relative">
 
@@ -295,7 +313,7 @@ const MagicDrawing = ({ onBack }) => {
                                 className={`w-full py-6 text-xl flex items-center justify-center gap-3 ${!selectedStyle ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 transition-transform'}`}
                                 variant="success"
                             >
-                                <Wand2 /> {apiKey ? '¡TRANSFORMAR!' : 'Ingresa tu API Key'}
+                                <Wand2 /> ¡TRANSFORMAR!
                             </Button>
                         </div>
                     </div>
@@ -311,8 +329,13 @@ const MagicDrawing = ({ onBack }) => {
                         </div>
                         <h2 className="text-3xl font-bold mb-4">Haciendo Magia...</h2>
                         <p className="text-slate-400 text-lg max-w-md">
-                            Conectando con OpenAI (GPT-4o + DALL-E 3)...
+                            {processingStatus}
                         </p>
+                        <div className="mt-4 flex gap-2 text-xs text-slate-500">
+                            <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full">Groq Vision</span>
+                            <span className="text-slate-600">→</span>
+                            <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">FLUX (Together AI)</span>
+                        </div>
                     </div>
                 )}
 
