@@ -127,14 +127,20 @@ export default function App() {
         // Calculate new stats
         const newXp = (user.xp || 0) + score;
         const newHighScores = { ...user.highScores };
+        const newScoreHistory = { ...(user.scoreHistory || {}) };
 
         if (activeGameId !== 'daily_routine') {
             newHighScores[activeGameId] = Math.max(newHighScores[activeGameId] || 0, score);
+            
+            // Handle last 3 scores
+            if (!newScoreHistory[activeGameId]) newScoreHistory[activeGameId] = [];
+            newScoreHistory[activeGameId] = [score, ...newScoreHistory[activeGameId]].slice(0, 3);
         }
 
         const updates = {
             xp: newXp,
             highScores: newHighScores,
+            scoreHistory: newScoreHistory,
             stats: {
                 ...user.stats,
                 totalGames: (user.stats?.totalGames || 0) + 1,
@@ -372,7 +378,14 @@ export default function App() {
                 </div>
                 <div className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center">
                     <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl h-[600px] border-4 border-slate-200 relative overflow-hidden p-4">
-                        {CurrentGame ? <CurrentGame onComplete={handleGameComplete} isDaily={isDaily} dailyTarget={dailyTarget} /> : <div>Error</div>}
+                        {CurrentGame ? (
+                            <CurrentGame 
+                                onComplete={handleGameComplete} 
+                                isDaily={isDaily} 
+                                dailyTarget={dailyTarget} 
+                                history={user?.scoreHistory?.[activeGameId] || []}
+                            />
+                        ) : <div>Error</div>}
                     </div>
                 </div>
             </div>

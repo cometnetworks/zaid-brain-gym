@@ -8,10 +8,14 @@ const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
 
 const STYLES = [
-    { id: 'pixar', name: 'Estilo Pixar', icon: '🎨', color: 'bg-blue-500', prompt: 'Convert this drawing into a high-quality 3D Pixar-style animation character. Vibrant colors, cute features, soft lighting, 3d render.' },
-    { id: 'anime', name: 'Anime / One Piece', icon: '⚔️', color: 'bg-orange-500', prompt: 'Convert this drawing into a high-quality One Piece anime style character. Cel shaded, vibrant colors, dramatic lighting, manga style.' },
+    { id: 'pixar', name: 'Pixar', icon: '🎨', color: 'bg-blue-500', prompt: 'Convert this drawing into a high-quality 3D Pixar-style animation character. Vibrant colors, cute features, soft lighting, 3d render.' },
+    { id: 'anime', name: 'One Piece', icon: '⚔️', color: 'bg-orange-500', prompt: 'Convert this drawing into a high-quality One Piece anime style character. Cel shaded, vibrant colors, dramatic lighting, manga style.' },
     { id: 'minecraft', name: 'Minecraft', icon: '🧱', color: 'bg-green-600', prompt: 'Convert this drawing into a Minecraft blocky style character. Voxel art, pixelated textures, cube world aesthetic.' },
     { id: 'marvel', name: 'Cómic Marvel', icon: '🦸', color: 'bg-red-600', prompt: 'Convert this drawing into a Marvel comic book style character. Bold lines, dynamic shading, comic book aesthetic, superhero.' },
+    { id: 'sonic', name: 'Sonic Game', icon: '🦔', color: 'bg-blue-600', prompt: 'Convert this drawing into a Sonic the Hedgehog video game character. Blue hedgehog style, 3D modern look, dynamic pose, high energy.' },
+    { id: 'spiderman', name: 'Spider-Man', icon: '🕷️', color: 'bg-red-700', prompt: 'Convert this drawing into a Marvel Spider-Man character. The character is wearing the iconic red and blue suit but has NO MASK, showing a human face. High quality cinematic lighting, superhero aesthetic.' },
+    { id: 'ghibli', name: 'Studio Ghibli', icon: '🚂', color: 'bg-sky-400', prompt: 'Convert this drawing into a Studio Ghibli anime style illustration. Soft hand-drawn textures, high detail, whimsical atmosphere, cinematic anime aesthetic.' },
+    { id: 'zombie', name: 'Zombi', icon: '🧟', color: 'bg-emerald-900', prompt: 'Convert this drawing into a scary zombie style character. Post-apocalyptic, weathered clothes, green/grey skin, spooky details, horror aesthetic.' },
 ];
 
 const MagicDrawing = ({ onBack }) => {
@@ -294,17 +298,19 @@ const MagicDrawing = ({ onBack }) => {
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mb-8">
-                                {STYLES.map(style => (
-                                    <button
-                                        key={style.id}
-                                        onClick={() => { playSound('pop'); setSelectedStyle(style.id); }}
-                                        className={`p-4 rounded-xl border-4 transition-all flex flex-col items-center gap-2 ${selectedStyle === style.id ? `border-white ${style.color} scale-105 shadow-xl` : 'border-slate-600 bg-slate-700 hover:bg-slate-600'}`}
-                                    >
-                                        <span className="text-4xl">{style.icon}</span>
-                                        <span className="font-bold text-sm">{style.name}</span>
-                                    </button>
-                                ))}
+                            <div className="flex-1 overflow-y-auto pr-2 mb-4 scrollbar-thin scrollbar-thumb-slate-600">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {STYLES.map(style => (
+                                        <button
+                                            key={style.id}
+                                            onClick={() => { playSound('pop'); setSelectedStyle(style.id); }}
+                                            className={`p-3 rounded-xl border-4 transition-all flex flex-col items-center gap-1 ${selectedStyle === style.id ? `border-white ${style.color} scale-105 shadow-xl` : 'border-slate-600 bg-slate-700 hover:bg-slate-600'}`}
+                                        >
+                                            <span className="text-3xl">{style.icon}</span>
+                                            <span className="font-bold text-[10px] sm:text-xs text-center leading-tight uppercase tracking-tighter">{style.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <Button
