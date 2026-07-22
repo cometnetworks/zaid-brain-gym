@@ -51,7 +51,22 @@ const MagicDrawing = ({ onBack }) => {
         setStep('preview');
     }, [webcamRef]);
 
-    // Vision Analysis Helper with Fallback
+const GROQ_VISION_MODELS = [
+    'llama-3.2-11b-vision-preview',
+    'llama-3.2-90b-vision-preview',
+    'llama-3.2-11b-vision-instruct',
+    'meta-llama/llama-4-scout-17b-16e-instruct',
+    'qwen/qwen3.6-27b'
+];
+
+const OPENROUTER_VISION_MODELS = [
+    'google/gemini-2.0-flash-lite-001',
+    'qwen/qwen-2.5-vl-72b-instruct:free',
+    'meta-llama/llama-3.2-11b-vision-instruct:free',
+    'openai/gpt-4o-mini'
+];
+
+    // Vision Analysis Helper with Multi-model Fallback
     const analyzeVision = async (imageB64) => {
         const attempts = [];
         if (aiEngine === 'openrouter_together' || aiEngine === 'openrouter_full') {
@@ -61,7 +76,7 @@ const MagicDrawing = ({ onBack }) => {
             if (GROQ_API_KEY) attempts.push('groq');
             if (OPENROUTER_API_KEY) attempts.push('openrouter');
         } else {
-            // 'auto' mode
+            // 'auto' mode: try Groq first if available, then OpenRouter
             if (GROQ_API_KEY) attempts.push('groq');
             if (OPENROUTER_API_KEY) attempts.push('openrouter');
         }
@@ -73,97 +88,114 @@ const MagicDrawing = ({ onBack }) => {
         let lastErr = null;
 
         for (const provider of attempts) {
-            try {
-                if (provider === 'groq') {
-                    console.log("1. Analyzing image with Groq Vision...");
-                    setProcessingStatus('Analizando dibujo con Groq Vision...');
-                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${GROQ_API_KEY}`,
-                        },
-                        body: JSON.stringify({
-                            model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-                            messages: [
-                                {
-                                    role: 'user',
-                                    content: [
-                                        {
-                                            type: 'text',
-                                            text: 'Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Ignore the rough sketch style, focus on the content and layout.'
-                                        },
-                                        {
-                                            type: 'image_url',
-                                            image_url: { url: imageB64 }
-                                        },
-                                    ],
-                                },
-                            ],
-                            max_tokens: 500,
-                        }),
-                    });
+            if (provider === 'groq') {
+                for (const modelId of GROQ_VISION_MODELS) {
+                    try {
+                        console.log(`1. Analyzing image with Groq Vision (${modelId})...`);
+                        setProcessingStatus(`Analizando dibujo con Groq (${modelId})...`);
+                        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                            },
+                            body: JSON.stringify({
+                                model: modelId,
+                                messages: [
+                                    {
+                                        role: 'user',
+                                        content: [
+                                            {
+                                                type: 'text',
+                                                text: 'Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Ignore the rough sketch style, focus on the content and layout.'
+                                            },
+                                            {
+                                                type: 'image_url',
+                                                image_url: { url: imageB64 }
+                                            },
+                                        ],
+                                    },
+                                ],
+                                max_tokens: 500,
+                            }),
+                        });
 
-                    if (!res.ok) {
-                        const errJson = await res.json().catch(() => ({}));
-                        throw new Error(errJson?.error?.message || `Groq error: ${res.status}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            const content = data.choices?.[0]?.message?.content;
+                            if (content) {
+                                return {
+                                    description: content,
+                                    providerName: `Groq Vision (${modelId})`
+                                };
+                            }
+                        } else {
+                            const errJson = await res.json().catch(() => ({}));
+                            console.warn(`Groq model ${modelId} failed:`, errJson);
+                            lastErr = new Error(errJson?.error?.message || `Groq error: ${res.status}`);
+                        }
+                    } catch (err) {
+                        console.warn(`Groq model ${modelId} exception:`, err);
+                        lastErr = err;
                     }
-
-                    const data = await res.json();
-                    return {
-                        description: data.choices[0].message.content,
-                        providerName: 'Groq Vision (Llama 4)'
-                    };
-                } else if (provider === 'openrouter') {
-                    console.log("1. Analyzing image with OpenRouter Vision...");
-                    setProcessingStatus('Analizando dibujo con OpenRouter (Gemini 2.0)...');
-                    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://zaid-brain-gym.pages.dev',
-                            'X-Title': 'Zaid Brain Gym',
-                        },
-                        body: JSON.stringify({
-                            model: 'google/gemini-2.0-flash-lite-001',
-                            messages: [
-                                {
-                                    role: 'user',
-                                    content: [
-                                        {
-                                            type: 'text',
-                                            text: 'Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Ignore the rough sketch style, focus on the content and layout.'
-                                        },
-                                        {
-                                            type: 'image_url',
-                                            image_url: { url: imageB64 }
-                                        },
-                                    ],
-                                },
-                            ],
-                            max_tokens: 500,
-                        }),
-                    });
-
-                    if (!res.ok) {
-                        const errJson = await res.json().catch(() => ({}));
-                        throw new Error(errJson?.error?.message || `OpenRouter error: ${res.status}`);
-                    }
-
-                    const data = await res.json();
-                    return {
-                        description: data.choices[0].message.content,
-                        providerName: 'OpenRouter (Gemini 2.0)'
-                    };
                 }
-            } catch (err) {
-                console.warn(`Vision provider '${provider}' failed:`, err);
-                lastErr = err;
+            } else if (provider === 'openrouter') {
+                for (const modelId of OPENROUTER_VISION_MODELS) {
+                    try {
+                        console.log(`1. Analyzing image with OpenRouter Vision (${modelId})...`);
+                        setProcessingStatus(`Analizando dibujo con OpenRouter (${modelId})...`);
+                        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                                'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://zaid-brain-gym.pages.dev',
+                                'X-Title': 'Zaid Brain Gym',
+                            },
+                            body: JSON.stringify({
+                                model: modelId,
+                                messages: [
+                                    {
+                                        role: 'user',
+                                        content: [
+                                            {
+                                                type: 'text',
+                                                text: 'Analyze this drawing for the purpose of recreating it as a high-quality image. Describe the EXACT composition, framing, subject pose, and element placement. Be extremely literal about what is where. Ignore the rough sketch style, focus on the content and layout.'
+                                            },
+                                            {
+                                                type: 'image_url',
+                                                image_url: { url: imageB64 }
+                                            },
+                                        ],
+                                    },
+                                ],
+                                max_tokens: 500,
+                            }),
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            const content = data.choices?.[0]?.message?.content;
+                            if (content) {
+                                return {
+                                    description: content,
+                                    providerName: `OpenRouter (${modelId.split('/')[1] || modelId})`
+                                };
+                            }
+                        } else {
+                            const errJson = await res.json().catch(() => ({}));
+                            console.warn(`OpenRouter model ${modelId} failed:`, errJson);
+                            lastErr = new Error(errJson?.error?.message || `OpenRouter error: ${res.status}`);
+                        }
+                    } catch (err) {
+                        console.warn(`OpenRouter model ${modelId} exception:`, err);
+                        lastErr = err;
+                    }
+                }
             }
         }
 
-        throw lastErr || new Error('No se pudo analizar la imagen con los proveedores disponibles.');
+        throw lastErr || new Error('No se pudo analizar la imagen con los modelos de IA disponibles.');
     };
 
     // Image Generation Helper with Fallback
