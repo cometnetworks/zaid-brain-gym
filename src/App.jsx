@@ -4,7 +4,8 @@ import {
     Play, Pause, RotateCcw, Lock, Star, Heart, Map, Hammer, HelpCircle,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Home, ChevronRight,
     BookOpen, Eye, Zap, Calculator, Grid, Hash, Trophy, Timer, Languages,
-    Volume2, VolumeX, Smile, Target, Wand2, UserPlus, LogOut
+    Volume2, VolumeX, Smile, Target, Wand2, UserPlus, LogOut,
+    Type, Dices, PlusCircle, PenTool, Shuffle, Sparkles, Puzzle, Layers
 } from 'lucide-react';
 
 // Utilities
@@ -76,24 +77,24 @@ export default function App() {
         { id: 'mem', title: 'Simón Dice', color: 'bg-yellow-400', icon: <Brain />, Component: MemorySimon },
         { id: 'pairs', title: 'Pares', color: 'bg-cyan-400', icon: <Smile />, Component: MemoryMatch },
         { id: 'math', title: 'Matemáticas', color: 'bg-blue-400', icon: <Calculator />, Component: VisualMath },
-        { id: 'word_es', title: 'Ordena Letras', color: 'bg-purple-400', icon: <BookOpen />, Component: (props) => <WordBuilder {...props} language="es" /> },
+        { id: 'word_es', title: 'Ordena Letras', color: 'bg-purple-400', icon: <Type />, Component: (props) => <WordBuilder {...props} language="es" /> },
         { id: 'word_en', title: 'Spelling Bee', color: 'bg-pink-400', icon: <Languages />, Component: (props) => <WordBuilder {...props} language="en" /> },
         { id: 'story', title: 'Historias', color: 'bg-orange-400', icon: <BookOpen />, Component: StoryTime },
         { id: 'count', title: 'Conteo Rápido', color: 'bg-rose-400', icon: <Hash />, Component: QuickCount },
         { id: 'seq', title: 'Secuencias', color: 'bg-teal-400', icon: <Grid />, Component: NumberSequence },
-        { id: 'scrab', title: 'Scrabble Jr', color: 'bg-amber-600', icon: <Grid />, Component: ScrabbleGame },
-        { id: 'cross', title: 'Crucigrama', color: 'bg-sky-500', icon: <Grid />, Component: CrosswordGame },
+        { id: 'scrab', title: 'Scrabble Jr', color: 'bg-amber-600', icon: <Puzzle />, Component: ScrabbleGame },
+        { id: 'cross', title: 'Crucigrama', color: 'bg-sky-500', icon: <Layers />, Component: CrosswordGame },
         { id: 'phys', title: 'Físico', color: 'bg-stone-400', icon: <Hammer />, Component: AnalogActivity },
-        { id: 'patt', title: 'Patrones', color: 'bg-orange-600', icon: <Grid />, Component: LogicPattern },
+        { id: 'patt', title: 'Patrones', color: 'bg-orange-600', icon: <Sparkles />, Component: LogicPattern },
         { id: 'class', title: 'Organizar', color: 'bg-emerald-500', icon: <Target />, Component: LogicClassification },
-        { id: 'dice', title: 'Dados', color: 'bg-blue-600', icon: <Calculator />, Component: MathDiceRace },
-        { id: 'build', title: 'Suma 10', color: 'bg-violet-600', icon: <Hash />, Component: MathNumberBuilder },
-        { id: 'trace', title: 'Trazo Maestro', color: 'bg-stone-500', icon: <Wand2 />, Component: TraceMaster },
-        { id: 'stroop', title: 'Flechas Locas', color: 'bg-red-500', icon: <Target />, Component: StroopFocus },
+        { id: 'dice', title: 'Dados', color: 'bg-blue-600', icon: <Dices />, Component: MathDiceRace },
+        { id: 'build', title: 'Suma 10', color: 'bg-violet-600', icon: <PlusCircle />, Component: MathNumberBuilder },
+        { id: 'trace', title: 'Trazo Maestro', color: 'bg-stone-500', icon: <PenTool />, Component: TraceMaster },
+        { id: 'stroop', title: 'Flechas Locas', color: 'bg-red-500', icon: <Shuffle />, Component: StroopFocus },
         // English Versions
         { id: 'speed-en', title: 'Speed Reading', color: 'bg-rose-500', icon: <Eye />, Component: SpeedReadingEn },
-        { id: 'scrabble-en', title: 'Scrabble English', color: 'bg-blue-600', icon: <Grid />, Component: ScrabbleGameEn },
-        { id: 'crossword-en', title: 'Crossword English', color: 'bg-indigo-500', icon: <Grid />, Component: CrosswordGameEn },
+        { id: 'scrabble-en', title: 'Scrabble English', color: 'bg-blue-600', icon: <Puzzle />, Component: ScrabbleGameEn },
+        { id: 'crossword-en', title: 'Crossword English', color: 'bg-indigo-500', icon: <Layers />, Component: CrosswordGameEn },
     ];
 
     const handleProfileSelect = (id) => {
@@ -299,24 +300,24 @@ export default function App() {
     if (view === 'arcade') {
         const highScores = user?.highScores || {};
         return (
-            <div className="min-h-screen bg-indigo-100 p-6 font-sans">
+            <div className="min-h-screen bg-indigo-100 p-4 sm:p-6 font-sans">
                 <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center gap-4 mb-8">
-                        <button onClick={() => setView('landing')} className="bg-white p-3 rounded-full shadow-lg hover:scale-110"><Home className="text-slate-700" /></button>
-                        <h1 className="text-4xl font-black text-slate-700">SALA DE JUEGOS</h1>
-                        <div className="ml-auto bg-yellow-400 px-6 py-2 rounded-full font-bold text-yellow-900 shadow-md flex items-center gap-2">
-                            <Star className="fill-current" /> {user?.xp || 0} XP
+                    <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                        <button onClick={() => setView('landing')} className="bg-white p-2.5 sm:p-3 rounded-full shadow-lg hover:scale-110"><Home className="text-slate-700 w-5 h-5 sm:w-6 sm:h-6" /></button>
+                        <h1 className="text-2xl sm:text-4xl font-black text-slate-700">SALA DE JUEGOS</h1>
+                        <div className="ml-auto bg-yellow-400 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full font-bold text-yellow-900 shadow-md flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
+                            <Star className="fill-current w-4 h-4 sm:w-5 sm:h-5" /> {user?.xp || 0} XP
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                         {gamesList.map((game) => (
-                            <button key={game.id} onClick={() => launchGame(game.id)} className="bg-white rounded-3xl p-6 shadow-xl border-b-8 border-slate-200 hover:border-slate-300 hover:-translate-y-2 transition-all flex flex-col items-center gap-2 group relative">
-                                <div className={`w-20 h-20 ${game.color} rounded-2xl flex items-center justify-center text-white shadow-inner group-hover:scale-110 transition-transform`}>
-                                    {React.cloneElement(game.icon, { size: 40 })}
+                            <button key={game.id} onClick={() => launchGame(game.id)} className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border-b-4 sm:border-b-8 border-slate-200 hover:border-slate-300 hover:-translate-y-1 sm:hover:-translate-y-2 transition-all flex flex-col items-center gap-2 group relative">
+                                <div className={`w-14 h-14 sm:w-20 sm:h-20 ${game.color} rounded-xl sm:rounded-2xl flex items-center justify-center text-white shadow-inner group-hover:scale-110 transition-transform`}>
+                                    {React.cloneElement(game.icon, { className: "w-7 h-7 sm:w-10 sm:h-10" })}
                                 </div>
-                                <span className="font-bold text-lg text-slate-600 text-center leading-tight">{game.title}</span>
+                                <span className="font-bold text-sm sm:text-lg text-slate-600 text-center leading-tight">{game.title}</span>
                                 {highScores[game.id] > 0 && (
-                                    <div className="mt-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                    <div className="mt-1 sm:mt-2 bg-yellow-100 text-yellow-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-1">
                                         <Trophy size={10} /> Récord: {highScores[game.id]}
                                     </div>
                                 )}
