@@ -3,7 +3,7 @@ import { playSound } from '../../utils/audio';
 import { STORY_DB } from '../../data/db';
 
 const StoryTime = ({ onComplete }) => {
-    const [timeLeft, setTimeLeft] = useState(60);
+    const [timeLeft, setTimeLeft] = useState(180);
     const [score, setScore] = useState(0);
     const [currentStory, setCurrentStory] = useState(null);
     const [step, setStep] = useState('read');
